@@ -58,11 +58,15 @@ different Genesis version will not line up.
 | Tool: load order | MO2 overwrites `%LOCALAPPDATA%\Starfield\Plugins.txt` with its profile on every launch. PULSAR.esp was enabled there and so got dropped, and the lobby's mod check read the wrong list. | In MO2 mode, `plugins.txt` and `StarfieldCustom.ini` are read and written in the MO2 profile. |
 | Tool: game folder | Install and Setup targeted the Steam folder. Genesis runs from its own Stock Game copy. | The game path is taken from `gamePath` in `ModOrganizer.ini`. |
 | Plugin: NPC spawn | The Papyrus side looks forms up by plugin-local ID in official plugins only. For a Genesis NPC it spawned an unrelated vanilla form and disabled an unrelated vanilla ref. | The C++ side checks what Papyrus would resolve to and skips the request unless it is the intended form. The client then keeps its own copy of that NPC. (`src/NPCSync/NPCSync.cpp`, `PluginLookup::PapyrusFindFormInAnyPlugin`) |
+| Plugin: items and world state | When the host named a plugin the client didn't load, every receive path fell back to the host's raw FormID. On the client that ID belongs to some other mod, so loot, container takes, keys, equipment, corpse loot, consumed items and weather could become the wrong form. Your saved character's items could do the same when a mod went missing. | `PluginLookup::ResolveFromPeer` only uses the raw ID when it really belongs to the same plugin locally. Anything else is dropped with a log line. |
+| Tool: mod-match check | Only reported mods the joiner was missing. A long Genesis list is cut to 4 KB by the lobby, so the tail was never compared. | Also reports mods only the joiner has and compares mod counts. It says when the host list was cut short, and also warns when one side is vanilla. |
+| Tool: MO2 safety | Editing the profile while MO2 is open gets undone when MO2 exits. A profile switched in MO2 wasn't noticed. | Install and Fix wait until MO2 is closed. `ModOrganizer.ini` is re-read when it changes. `PULSAR.esp` is also added to `loadorder.txt`. |
 
 ## Known limits
 
-* **Untested in game.** The tool changes build. The plugin change has not been compiled
-  here: it needs MSVC, CommonLibSF and the patches in `patches/` on Windows (see
+* **Untested in game.** The tool changes build and pass a scripted test against a fake
+  MO2 install. The plugin changes have not been compiled
+  here: that needs MSVC, CommonLibSF and the patches in `patches/` on Windows (see
   [BUILD.md](BUILD.md)). None of it has been run with two players on Genesis yet.
 * **Genesis-only NPCs are not position-synced.** When the host's NPC comes from a Genesis
   plugin and the client has no matching local NPC, the client just doesn't see the host's

@@ -1,0 +1,76 @@
+# Genesis fork: builds the SFSE plugin and the tool on every push, so source changes
+# are proven to compile without a local Visual Studio setup. Mirrors BUILD.md.
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  plugin:
+    runs-on: windows-latest
+    env:
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg-cache
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Apply CommonLibSF patch
+        working-directory: extern/CommonLibSF
+        run: git apply ../../patches/commonlibsf.patch
+
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v4
+        with:
+          path: vcpkg-cache
+          key: vcpkg-${{ hashFiles('vcpkg.json') }}
+
+      - name: Configure
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force $env:VCPKG_DEFAULT_BINARY_CACHE | Out-Null
+          $env:VCPKG_ROOT = $env:VCPKG_INSTALLATION_ROOT
+          cmake --preset release
+
+      - name: Build PULSAR.dll
+        run: cmake --build build/release --target PULSAR
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PULSAR-dll-RelWithDebInfo
+          path: |
+            build/release/PULSAR.dll
+            build/release/PULSAR.pdb
+
+  tool:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build tool and companion
+        run: |
+          dotnet build lobby/pulsar/Pulsar.csproj -c Release
+          dotnet build lobby/companion/Companion.csproj -c Release
+
+      - name: Test companion
+        run: dotnet test lobby/companion.tests/Companion.Tests.csproj -c Release
+
+      - name: Publish tool
+        run: |
+          dotnet publish lobby/pulsar/Pulsar.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o out
+          dotnet publish lobby/companion/Companion.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pulsar-tool-win-x64
+          path: out
