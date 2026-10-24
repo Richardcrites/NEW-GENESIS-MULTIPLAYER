@@ -74,3 +74,50 @@ jobs:
         with:
           name: Pulsar-tool-win-x64
           path: out
+
+  # One ready-to-run download: Pulsar.exe + companion, with the mod payload staged in
+  # mod/Data where the tool's "Install mod" button looks for it (ModInstaller).
+  package:
+    needs: [plugin, tool]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: Pulsar-tool-win-x64
+          path: dl/tool
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: PULSAR-dll-RelWithDebInfo
+          path: dl/dll
+
+      - name: Stage package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $stage = "Genesis-Coop"
+          $data  = "$stage/mod/Data"
+          New-Item -ItemType Directory -Force "$data/SFSE/Plugins", "$data/Scripts" | Out-Null
+
+          Copy-Item dl/tool/Pulsar.exe, dl/tool/PulsarCompanion.exe $stage
+          Copy-Item dl/dll/PULSAR.dll "$data/SFSE/Plugins/PULSAR.dll"
+          Copy-Item "data/PULSAR - Main.ba2" $data
+          Copy-Item data/Scripts/*.pex "$data/Scripts"
+
+          # Ship PULSAR.esp with the TES4 master flag set, as tools/package_release.ps1 does.
+          $esp = [System.IO.File]::ReadAllBytes("$PWD/data/PULSAR.esp")
+          if ([System.Text.Encoding]::ASCII.GetString($esp, 0, 4) -ne "TES4") { throw "PULSAR.esp has no TES4 header" }
+          $esp[0x08] = $esp[0x08] -bor 0x01
+          [System.IO.File]::WriteAllBytes("$PWD/$data/PULSAR.esp", $esp)
+
+          Copy-Item LICENSE "$stage/LICENSE.txt"
+          Copy-Item LICENSE-ADDITIONAL "$stage/LICENSE-ADDITIONAL.txt"
+          Copy-Item GENESIS.md "$stage/GENESIS.md"
+          Get-ChildItem -Recurse $stage | Select-Object FullName, Length | Format-Table -AutoSize
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Genesis-Coop-Windows
+          path: Genesis-Coop

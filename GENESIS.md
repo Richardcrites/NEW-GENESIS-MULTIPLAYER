@@ -32,7 +32,10 @@ PULSAR shows a warning in the lobby browser when the mod lists differ.
 
 1. Install Genesis with Wabbajack as usual. Start it once from Mod Organizer 2 to make
    sure it works on its own, then **close MO2**.
-2. Start the PULSAR tool from this fork. On **Co-op → Game & launch**, click **Browse...**
+2. Get the tool: open this repo's **Actions** tab on GitHub, open the latest green
+   **build** run, and download **Genesis-Coop-Windows** at the bottom. Unzip it anywhere
+   except inside the Starfield or Genesis folders, keeping the `mod` folder next to
+   `Pulsar.exe`, then run `Pulsar.exe`. On **Co-op → Game & launch**, click **Browse...**
    and pick `ModOrganizer.exe` in your Genesis folder (not `sfse_loader.exe`).
    The tool reads `ModOrganizer.ini` and switches to Mod Organizer mode:
    * The game path becomes the Genesis Stock Game folder.

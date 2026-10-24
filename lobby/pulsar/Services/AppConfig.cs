@@ -85,8 +85,14 @@ public sealed class AppConfig
     // These are the real release repos; they are still PRIVATE for now (the update
     // check returns nothing / 404 until they are flipped public + a release is cut,
     // which the checker handles silently). Overridable via Settings.
-    public string ToolRepo { get; set; } = "ramisotti13-eng/pulsar-tool";
-    public string ModRepo  { get; set; } = "ramisotti13-eng/pulsar-mod";
+    // Genesis fork: both point at this fork. Upstream's mod release would replace the
+    // Genesis-patched PULSAR.dll with the original one.
+    public string ToolRepo { get; set; } = ForkRepo;
+    public string ModRepo  { get; set; } = ForkRepo;
+
+    public const string ForkRepo = "Richardcrites/NEW-GENESIS-MULTIPLAYER";
+    private static readonly string[] UpstreamRepos =
+        { "ramisotti13-eng/pulsar-tool", "ramisotti13-eng/pulsar-mod" };
 
     // Legacy single-repo setting (pre tool/mod split). Kept ONLY so old configs still
     // deserialize; Load() migrates a non-empty value into ToolRepo, then clears it.
@@ -133,6 +139,18 @@ public sealed class AppConfig
                     migrated = true;
                 }
                 if ((cfg.ModRepo ?? "").StartsWith("PulsarDev/", StringComparison.OrdinalIgnoreCase))
+                {
+                    cfg.ModRepo = def.ModRepo;
+                    migrated = true;
+                }
+                // Genesis fork: the config file is shared with an upstream PULSAR install
+                // (%LOCALAPPDATA%\PULSAR), so move its upstream defaults over to the fork.
+                if (Array.Exists(UpstreamRepos, r => string.Equals(r, cfg.ToolRepo, StringComparison.OrdinalIgnoreCase)))
+                {
+                    cfg.ToolRepo = def.ToolRepo;
+                    migrated = true;
+                }
+                if (Array.Exists(UpstreamRepos, r => string.Equals(r, cfg.ModRepo, StringComparison.OrdinalIgnoreCase)))
                 {
                     cfg.ModRepo = def.ModRepo;
                     migrated = true;
