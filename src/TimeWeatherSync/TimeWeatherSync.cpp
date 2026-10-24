@@ -137,10 +137,11 @@ namespace Pulsar::TimeWeatherSync
             WriteTime(d.gameDaysPassed, d.gameHour);
 
             if (d.hasWeather) {
-                std::uint32_t resolved = 0;
-                if (d.weatherPlugin[0] != '\0')
-                    resolved = NPCSync::PluginLookup::ResolveCrossPlugin(d.weatherPlugin, d.weatherLocalID);
-                if (!resolved) resolved = d.weatherBase;
+                char plugin[sizeof(d.weatherPlugin)];
+                std::memcpy(plugin, d.weatherPlugin, sizeof(plugin));
+                plugin[sizeof(plugin) - 1] = '\0';
+                const std::uint32_t resolved = NPCSync::PluginLookup::ResolveFromPeer(
+                    plugin, d.weatherLocalID, d.weatherBase);
                 if (resolved) {
                     auto* form = RE::TESForm::LookupByID(resolved);
                     if (form) ForceWeather(reinterpret_cast<std::uintptr_t>(form));

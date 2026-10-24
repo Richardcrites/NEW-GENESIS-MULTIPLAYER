@@ -3556,12 +3556,14 @@ void OnPacketReceived(const std::uint8_t* data, std::size_t length)
         LootDropData d{};
         std::memcpy(&d, data + 1, sizeof(d));
 
-        uint32_t resolved = 0;
-        if (d.itemPlugin[0] != '\0') {
-            resolved = NPCSync::PluginLookup::ResolveCrossPlugin(
-                d.itemPlugin, d.itemLocalID);
+        d.itemPlugin[sizeof(d.itemPlugin) - 1] = '\0';
+        const uint32_t resolved = NPCSync::PluginLookup::ResolveFromPeer(
+            d.itemPlugin, d.itemLocalID, d.itemBase);
+        if (!resolved) {
+            PLOG_INFO("[PULSAR] F.1.d RX: drop item=0x{:08X} - plugin '{}' not loaded here"sv,
+                      d.itemBase, d.itemPlugin);
+            return;
         }
-        if (!resolved) resolved = d.itemBase;
 
         // F.2: extract trailing mod descriptors and resolve each via the
         // same cross-plugin lookup as the item base.
@@ -3576,12 +3578,9 @@ void OnPacketReceived(const std::uint8_t* data, std::size_t length)
                     LootDropMod m{};
                     std::memcpy(&m, modPtr + i * sizeof(LootDropMod),
                                  sizeof(LootDropMod));
-                    uint32_t mr = 0;
-                    if (m.plugin[0] != '\0') {
-                        mr = NPCSync::PluginLookup::ResolveCrossPlugin(
-                            m.plugin, m.localID);
-                    }
-                    if (!mr) mr = m.base;
+                    m.plugin[sizeof(m.plugin) - 1] = '\0';
+                    const uint32_t mr = NPCSync::PluginLookup::ResolveFromPeer(
+                        m.plugin, m.localID, m.base);
                     if (mr) resolvedMods.push_back(mr);
                 }
             }
@@ -3608,19 +3607,17 @@ void OnPacketReceived(const std::uint8_t* data, std::size_t length)
         ContainerTakeData t{};
         std::memcpy(&t, data + 1, sizeof(t));
 
-        uint32_t resolvedContainerBase = 0;
-        if (t.containerPlugin[0] != '\0') {
-            resolvedContainerBase = NPCSync::PluginLookup::ResolveCrossPlugin(
-                t.containerPlugin, t.containerLocalID);
+        t.containerPlugin[sizeof(t.containerPlugin) - 1] = '\0';
+        t.itemPlugin[sizeof(t.itemPlugin) - 1] = '\0';
+        const uint32_t resolvedContainerBase = NPCSync::PluginLookup::ResolveFromPeer(
+            t.containerPlugin, t.containerLocalID, t.containerBase);
+        const uint32_t resolvedItemBase = NPCSync::PluginLookup::ResolveFromPeer(
+            t.itemPlugin, t.itemLocalID, t.itemBase);
+        if (!resolvedContainerBase || !resolvedItemBase) {
+            PLOG_INFO("[PULSAR] ContainerTake RX: drop container=0x{:08X} item=0x{:08X} - plugin '{}'/'{}' not loaded here"sv,
+                      t.containerBase, t.itemBase, t.containerPlugin, t.itemPlugin);
+            return;
         }
-        if (!resolvedContainerBase) resolvedContainerBase = t.containerBase;
-
-        uint32_t resolvedItemBase = 0;
-        if (t.itemPlugin[0] != '\0') {
-            resolvedItemBase = NPCSync::PluginLookup::ResolveCrossPlugin(
-                t.itemPlugin, t.itemLocalID);
-        }
-        if (!resolvedItemBase) resolvedItemBase = t.itemBase;
 
         // M.2 V5: forward transferReason; default 4 (kStoreInContainer) when
         // sender is on a pre-V5 build that wrote 0/garbage.
@@ -3637,12 +3634,9 @@ void OnPacketReceived(const std::uint8_t* data, std::size_t length)
                     LootDropMod m{};
                     std::memcpy(&m, data + 1 + sizeof(ContainerTakeData)
                                 + i * sizeof(LootDropMod), sizeof(m));
-                    uint32_t rm = 0;
-                    if (m.plugin[0] != '\0') {
-                        rm = NPCSync::PluginLookup::ResolveCrossPlugin(
-                            m.plugin, m.localID);
-                    }
-                    if (!rm) rm = m.base;
+                    m.plugin[sizeof(m.plugin) - 1] = '\0';
+                    const uint32_t rm = NPCSync::PluginLookup::ResolveFromPeer(
+                        m.plugin, m.localID, m.base);
                     if (rm) resolvedMods.push_back(rm);
                 }
             }
@@ -3676,16 +3670,16 @@ void OnPacketReceived(const std::uint8_t* data, std::size_t length)
     LootPickupData p{};
     std::memcpy(&p, data + 1, sizeof(p));
 
-    // Re-encode the host's base FormID into our load-order. Fall back to
-    // the raw base when the plugin isn't in our list or ESL/ESM flag-aware
-    // mapping can't be resolved - exact FormID matches still work when the
-    // plugin happens to load at the same compile index on both machines.
-    uint32_t resolved = 0;
-    if (p.basePlugin[0] != '\0') {
-        resolved = NPCSync::PluginLookup::ResolveCrossPlugin(
-            p.basePlugin, p.baseLocalID);
+    // Re-encode the host's base FormID into our load-order. The raw base is
+    // only used when it belongs to the same plugin here (see ResolveFromPeer).
+    p.basePlugin[sizeof(p.basePlugin) - 1] = '\0';
+    const uint32_t resolved = NPCSync::PluginLookup::ResolveFromPeer(
+        p.basePlugin, p.baseLocalID, p.baseFormID);
+    if (!resolved) {
+        PLOG_INFO("[PULSAR] LootPickup RX: drop base=0x{:08X} - plugin '{}' not loaded here"sv,
+                  p.baseFormID, p.basePlugin);
+        return;
     }
-    if (!resolved) resolved = p.baseFormID;
 
     {
         std::lock_guard g(s_pendingMutex);
@@ -4236,10 +4230,7 @@ void OnKeyMirrorReceived(const std::uint8_t* data, std::size_t length)
     KeyMirrorData d{};
     std::memcpy(&d, data + 1, sizeof(d));
     d.plugin[sizeof(d.plugin) - 1] = '\0';
-    uint32_t resolved = 0;
-    if (d.plugin[0] != '\0')
-        resolved = NPCSync::PluginLookup::ResolveCrossPlugin(d.plugin, d.localID);
-    if (!resolved) resolved = d.base;
+    const uint32_t resolved = NPCSync::PluginLookup::ResolveFromPeer(d.plugin, d.localID, d.base);
     if (!resolved) return;
     // Mark known (suppress echo) + queue the inventory-add for the game thread
     // (engine inventory ops are not safe on the network thread).

@@ -2252,11 +2252,7 @@ namespace Pulsar::NPCSync {
             if (off + static_cast<std::size_t>(w.modCount) * sizeof(LootDropMod) > a_length) return;
 
             w.plugin[sizeof(w.plugin) - 1] = '\0';
-            uint32_t resolved = 0;
-            if (w.plugin[0] != '\0') {
-                resolved = PluginLookup::ResolveCrossPlugin(w.plugin, w.localID);
-            }
-            if (!resolved) resolved = w.base;
+            const uint32_t resolved = PluginLookup::ResolveFromPeer(w.plugin, w.localID, w.base);
 
             CorpseItemResolved e{};
             e.formID      = resolved;
@@ -2268,12 +2264,8 @@ namespace Pulsar::NPCSync {
                 std::memcpy(&m, a_data + off, sizeof(m));
                 off += sizeof(m);
                 m.plugin[sizeof(m.plugin) - 1] = '\0';
-                uint32_t rm = 0;
-                if (m.plugin[0] != '\0') {
-                    rm = PluginLookup::ResolveCrossPlugin(m.plugin, m.localID);
-                }
-                if (!rm) rm = m.base;
-                e.mods.push_back(rm);
+                const uint32_t rm = PluginLookup::ResolveFromPeer(m.plugin, m.localID, m.base);
+                if (rm) e.mods.push_back(rm);
             }
             if (e.formID && e.count > 0) items.push_back(std::move(e));
         }

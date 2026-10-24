@@ -328,4 +328,19 @@ namespace Pulsar::NPCSync::PluginLookup
         }
         return 0;
     }
+
+    uint32_t ResolveFromPeer(const char* pluginName, uint32_t localID, uint32_t rawFormID) noexcept
+    {
+        if (!pluginName || !pluginName[0]) return rawFormID;
+
+        if (uint32_t fid = ResolveCrossPlugin(pluginName, localID)) return fid;
+
+        // Lookup failed. The raw ID is still right if it is owned by that same plugin
+        // here (identical load order and the walk above hit a transient read fault).
+        if (rawFormID == 0) return 0;
+        char owner[260] = {};
+        if (FormIDToPluginName(rawFormID, owner, sizeof(owner)) && _stricmp(owner, pluginName) == 0)
+            return rawFormID;
+        return 0;
+    }
 }

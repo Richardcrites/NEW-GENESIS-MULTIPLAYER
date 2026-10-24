@@ -811,14 +811,13 @@ namespace Pulsar::Profile {
     }
 
     // Resolve a profile item to a live bound object: prefer T34 (plugin+localID),
-    // fall back to the stored raw formID (correct on the same machine).
+    // fall back to the stored raw formID only when it still belongs to that plugin.
+    // A plain raw fallback turned items from a mod that is no longer loaded (or a
+    // modlist profile used in another load order) into unrelated items.
     static RE::TESBoundObject* ResolveItemBound(const ProfileItem& it)
     {
-        if (!it.plugin.empty()) {
-            uint32_t fid = Pulsar::NPCSync::PluginLookup::ResolveCrossPlugin(it.plugin.c_str(), it.localID);
-            if (auto* b = LookupBound(fid)) return b;
-        }
-        return LookupBound(it.formID);  // same-machine fallback
+        return LookupBound(Pulsar::NPCSync::PluginLookup::ResolveFromPeer(
+            it.plugin.c_str(), it.localID, it.formID));
     }
 
     static int32_t CurrentCount(RE::PlayerCharacter* player, uint32_t formID)

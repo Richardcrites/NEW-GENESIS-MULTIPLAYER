@@ -487,12 +487,14 @@ void OnPacketReceived(const std::uint8_t* data, std::size_t length)
     GrabStateData d{};
     std::memcpy(&d, data + 1, sizeof(d));
 
-    std::uint32_t resolved = 0;
-    if (d.basePlugin[0] != '\0') {
-        resolved = NPCSync::PluginLookup::ResolveCrossPlugin(
-            d.basePlugin, d.baseLocalID);
+    d.basePlugin[sizeof(d.basePlugin) - 1] = '\0';
+    const std::uint32_t resolved = NPCSync::PluginLookup::ResolveFromPeer(
+        d.basePlugin, d.baseLocalID, d.baseFormID);
+    if (!resolved) {
+        PLOG_INFO("[PULSAR] {} RX: drop base=0x{:08X} - plugin '{}' not loaded here"sv,
+                  __func__, d.baseFormID, d.basePlugin);
+        return;
     }
-    if (!resolved) resolved = d.baseFormID;
 
     {
         std::lock_guard g(s_pendingMutex);

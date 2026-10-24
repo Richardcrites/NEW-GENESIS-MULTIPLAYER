@@ -46,4 +46,14 @@ namespace Pulsar::NPCSync::PluginLookup
     // form shares that local ID. Callers compare this against the FormID they mean
     // and skip the Papyrus request when the two differ.
     uint32_t PapyrusFindFormInAnyPlugin(uint32_t localID) noexcept;
+
+    // Resolve a {plugin, localID, rawFormID} triple sent by the peer.
+    //
+    // Unlike the "ResolveCrossPlugin, else the raw ID" pattern, the peer's raw FormID
+    // is only trusted when it really belongs to the named plugin on this machine (or
+    // the peer named no plugin at all: dynamic forms, older builds). With a large
+    // modlist such as Star Wars Genesis, a plugin the peer has and we don't would
+    // otherwise make its raw ID land on an unrelated form from whatever plugin holds
+    // that load-order slot here. Returns 0 when nothing matches.
+    uint32_t ResolveFromPeer(const char* pluginName, uint32_t localID, uint32_t rawFormID) noexcept;
 }

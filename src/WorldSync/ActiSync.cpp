@@ -229,19 +229,19 @@ void OnPacketReceived(const std::uint8_t* data, std::size_t length)
     ActiStateData d{};
     std::memcpy(&d, data + 1, sizeof(d));
 
-    uint32_t resolved = 0;
-    if (d.basePlugin[0] != '\0') {
-        resolved = NPCSync::PluginLookup::ResolveCrossPlugin(
-            d.basePlugin, d.baseLocalID);
+    d.basePlugin[sizeof(d.basePlugin) - 1] = '\0';
+    const uint32_t resolved = NPCSync::PluginLookup::ResolveFromPeer(
+        d.basePlugin, d.baseLocalID, d.baseFormID);
+    if (!resolved) {
+        PLOG_INFO("[PULSAR] {} RX: drop base=0x{:08X} - plugin '{}' not loaded here"sv,
+                  __func__, d.baseFormID, d.basePlugin);
+        return;
     }
-    if (!resolved) resolved = d.baseFormID;
 
-    uint32_t consumedResolved = 0;
-    if (d.consumedFormID && d.consumedPlugin[0] != '\0') {
-        consumedResolved = NPCSync::PluginLookup::ResolveCrossPlugin(
-            d.consumedPlugin, d.consumedLocalID);
-    }
-    if (d.consumedFormID && !consumedResolved) consumedResolved = d.consumedFormID;
+    d.consumedPlugin[sizeof(d.consumedPlugin) - 1] = '\0';
+    const uint32_t consumedResolved = d.consumedFormID
+        ? NPCSync::PluginLookup::ResolveFromPeer(d.consumedPlugin, d.consumedLocalID, d.consumedFormID)
+        : 0;
 
     {
         std::lock_guard g(s_pendingMutex);

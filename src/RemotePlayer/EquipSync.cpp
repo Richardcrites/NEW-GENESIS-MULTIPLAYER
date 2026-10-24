@@ -165,11 +165,8 @@ namespace Pulsar::RemotePlayer::EquipSync
             if (off + static_cast<std::size_t>(w.modCount) * sizeof(LootDropMod) > a_length) return;
 
             w.plugin[sizeof(w.plugin) - 1] = '\0';
-            std::uint32_t resolved = 0;
-            if (w.plugin[0] != '\0') {
-                resolved = NPCSync::PluginLookup::ResolveCrossPlugin(w.plugin, w.localID);
-            }
-            if (!resolved) resolved = w.base;
+            const std::uint32_t resolved =
+                NPCSync::PluginLookup::ResolveFromPeer(w.plugin, w.localID, w.base);
 
             EquipV2Entry e{};
             e.formID      = resolved;
@@ -181,14 +178,11 @@ namespace Pulsar::RemotePlayer::EquipSync
                 std::memcpy(&m, a_data + off, sizeof(m));
                 off += sizeof(m);
                 m.plugin[sizeof(m.plugin) - 1] = '\0';
-                std::uint32_t rm = 0;
-                if (m.plugin[0] != '\0') {
-                    rm = NPCSync::PluginLookup::ResolveCrossPlugin(m.plugin, m.localID);
-                }
-                if (!rm) rm = m.base;
-                e.mods.push_back(rm);
+                const std::uint32_t rm =
+                    NPCSync::PluginLookup::ResolveFromPeer(m.plugin, m.localID, m.base);
+                if (rm) e.mods.push_back(rm);
             }
-            entries.push_back(std::move(e));
+            if (e.formID) entries.push_back(std::move(e));
         }
 
         PLOG_INFO("[PULSAR] F.2v2 equip RX: {} items (slot {})"sv,
