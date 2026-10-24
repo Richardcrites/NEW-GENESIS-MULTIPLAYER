@@ -1,0 +1,59 @@
+diff --git a/include/RE/B/BSTArray.h b/include/RE/B/BSTArray.h
+index b2ed670..e1d7f0f 100644
+--- a/include/RE/B/BSTArray.h
++++ b/include/RE/B/BSTArray.h
+@@ -100,29 +100,17 @@ namespace RE
+ 
+ 		void* allocate(std::size_t a_size)
+ 		{
+-			if (!_allocator) {
+-				_allocator = MemoryManager::GetSingleton()->GetThreadScrapHeap();
+-			}
+-
+-			if (!_allocator) {
+-				REX::FAIL("failed to get thread scrap heap");
+-			}
+-
+-			const auto mem = _allocator->Allocate(a_size, alignof(void*));
++			// PULSAR: use regular heap - ScrapHeap::Allocate crashes in some contexts
++			auto mem = RE::malloc(a_size);
+ 			if (!mem) {
+ 				REX::FAIL("failed to handle allocation request");
+ 			}
+-
+ 			return mem;
+ 		}
+ 
+ 		void deallocate(void* a_ptr)
+ 		{
+-			if (_allocator) {
+-				_allocator->Deallocate(a_ptr, 0);
+-			} else {
+-				REX::FAIL("failed to deallocate block");
+-			}
++			RE::free(a_ptr);
+ 		}
+ 
+ 	protected:
+diff --git a/include/RE/IDs.h b/include/RE/IDs.h
+index 00495a2..545484c 100644
+--- a/include/RE/IDs.h
++++ b/include/RE/IDs.h
+@@ -15,7 +15,7 @@ namespace RE::ID
+ 	namespace Actor
+ 	{
+ 		inline constexpr REL::ID EquipItem{ 101349 };
+-		inline constexpr REL::ID EvaluatePackage{ 0 };    // 150640
++		inline constexpr REL::ID EvaluatePackage{ 150640 };    // 150640 (PULSAR enable, resolves on 244)
+ 		inline constexpr REL::ID GetActorKnowledge{ 0 };  // 150669
+ 		inline constexpr REL::ID IsHostileToActor{ 0 };   // 150777
+ 		inline constexpr REL::ID IsJumping{ 0 };          // 150985
+@@ -278,7 +278,7 @@ namespace RE::ID
+ 
+ 	namespace BSPointerHandleManagerInterface
+ 	{
+-		inline constexpr REL::ID GetSmartPointer{ 0 };  // 72432
++		inline constexpr REL::ID GetSmartPointer{ 72432 };  // 72432 (PULSAR enable, resolves on 244)
+ 	}
+ 
+ 	namespace BSReadWriteLock

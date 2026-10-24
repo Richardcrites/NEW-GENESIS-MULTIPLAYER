@@ -1,0 +1,11 @@
+# Caddy + the rate-limit plugin (github.com/mholt/caddy-ratelimit), built via xcaddy.
+# The stock caddy:2 image has NO rate limiting. We need per-IP request throttling at the
+# edge to blunt anonymous account/connection floods: a SpacetimeDB reducer cannot see the
+# client IP, so IP-level anti-abuse belongs here in front of the DB, not in the module.
+#
+# Bump the version pair together if you upgrade Caddy. 2.8.4 is a known-good release.
+FROM caddy:2.8.4-builder AS builder
+RUN xcaddy build --with github.com/mholt/caddy-ratelimit
+
+FROM caddy:2.8.4
+COPY --from=builder /usr/bin/caddy /usr/bin/caddy

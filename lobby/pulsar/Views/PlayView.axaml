@@ -1,0 +1,285 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Pulsar.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="680" d:DesignHeight="620"
+             x:Class="Pulsar.Views.PlayView"
+             x:DataType="vm:PlayViewModel">
+
+    <ScrollViewer Padding="32,28">
+        <StackPanel Spacing="0" MaxWidth="640" HorizontalAlignment="Left">
+
+            <TextBlock Classes="PageTitle" Text="Co-op" />
+            <TextBlock Classes="PageSubtitle"
+                       Text="Play Starfield with a friend. Host a game and share the code, or paste a friend's code to join. Connecting and launching happen automatically." />
+
+            <!-- Your name + connection status -->
+            <Border Classes="Card" Margin="0,0,0,16">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Spacing="4">
+                        <TextBlock Classes="FieldLabel" Text="Your name" />
+                        <TextBox Width="260" HorizontalAlignment="Left"
+                                 Text="{Binding PlayerName, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                 Watermark="Your name" />
+                        <TextBlock Text="{Binding Shell.NameStatus}" FontSize="12" Opacity="0.7" Margin="2,4,0,0" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" VerticalAlignment="Top" Margin="0,18,0,0" Spacing="6">
+                        <Border Classes="StatusPill"
+                                Classes.Connected="{Binding Shell.IsConnected}"
+                                Classes.Disconnected="{Binding !Shell.IsConnected}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Ellipse Width="9" Height="9" Fill="White" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding Shell.ConnectionStatus}" />
+                            </StackPanel>
+                        </Border>
+                        <Button Content="Reconnect" HorizontalAlignment="Right"
+                                IsVisible="{Binding IsOffline}"
+                                Command="{Binding ReconnectCommand}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Game & launch (auto-expands when the install is not found yet, else tucked away) -->
+            <Expander Header="Game &amp; launch" Margin="0,0,0,16"
+                      IsExpanded="{Binding GameNotFound, Mode=OneWay}">
+                <StackPanel Spacing="10" Margin="0,8,0,0">
+                    <CheckBox Content="Launch Starfield automatically after host / join"
+                              IsChecked="{Binding AutoLaunch}" />
+                    <StackPanel Orientation="Horizontal" Spacing="14">
+                        <CheckBox Content="Auto-save my character"
+                                  IsChecked="{Binding AutoSave}" />
+                        <TextBlock Text="{Binding Shell.LastSaved}"
+                                   VerticalAlignment="Center" FontSize="12" Opacity="0.7" />
+                    </StackPanel>
+                    <TextBlock Classes="FieldLabel" Text="Game location (found automatically)" />
+                    <Grid ColumnDefinitions="*,Auto,Auto">
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding StarfieldPath}"
+                                 Watermark="Found automatically. Use Detect or Browse if empty." />
+                        <Button Grid.Column="1" Margin="8,0,0,0"
+                                Content="Detect"
+                                ToolTip.Tip="Search Steam libraries and common folders for Starfield"
+                                Command="{Binding AutoDetectCommand}" />
+                        <Button Grid.Column="2" Margin="8,0,0,0"
+                                Content="Browse..."
+                                Command="{Binding BrowseCommand}" />
+                    </Grid>
+                    <Button HorizontalAlignment="Left" MinWidth="160"
+                            Content="Launch Starfield"
+                            Command="{Binding LaunchCommand}" />
+                </StackPanel>
+            </Expander>
+
+            <!-- Host a game -->
+            <Border Classes="Card" Margin="0,0,0,16">
+                <StackPanel Spacing="10">
+                    <TextBlock Classes="SectionHeader" Text="Host a game" />
+                    <TextBlock Text="Create a game, then send the invite code to your friend."
+                               Opacity="0.6" FontSize="12" />
+                    <Grid ColumnDefinitions="*,*">
+                        <StackPanel Grid.Column="0" Spacing="4" Margin="0,0,8,0">
+                            <TextBlock Classes="FieldLabel" Text="Game name" />
+                            <TextBox Text="{Binding HostLobbyName}" Watermark="My game"
+                                     IsEnabled="{Binding !Shell.IsHosting}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
+                            <TextBlock Classes="FieldLabel" Text="Password (optional)" />
+                            <TextBox Text="{Binding HostPassword}" PasswordChar="●"
+                                     Watermark="leave empty for open"
+                                     IsEnabled="{Binding !Shell.IsHosting}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                        <TextBlock Text="Max players" VerticalAlignment="Center" />
+                        <ComboBox Width="72"
+                                  ItemsSource="{Binding MaxPlayerOptions}"
+                                  SelectedItem="{Binding MaxPlayers, Mode=TwoWay}"
+                                  IsEnabled="{Binding !Shell.IsHosting}" />
+                        <TextBlock Text="3-4 is experimental, please give feedback"
+                                   Opacity="0.55" FontSize="12" VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <Button Classes="Primary accent" HorizontalAlignment="Stretch"
+                            Command="{Binding HostToggleCommand}"
+                            IsEnabled="{Binding CanHost}"
+                            Content="{Binding HostButtonText}" />
+
+                    <!-- Invite code (shown while hosting) -->
+                    <Border IsVisible="{Binding Shell.IsHosting}"
+                            Background="{DynamicResource ControlFillColorDefaultBrush}"
+                            CornerRadius="6" Padding="12,10">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Send this code to your friend:" Opacity="0.7" FontSize="12" />
+                            <Grid ColumnDefinitions="*,Auto">
+                                <SelectableTextBlock Grid.Column="0"
+                                                     Text="{Binding Shell.HostInviteCode}"
+                                                     FontFamily="Consolas,monospace" FontSize="20" FontWeight="Bold"
+                                                     VerticalAlignment="Center" />
+                                <Button Grid.Column="1" Content="Copy" Click="OnCopyCode" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- Join a game -->
+            <Border Classes="Card" Margin="0,0,0,16">
+                <StackPanel Spacing="10">
+                    <TextBlock Classes="SectionHeader" Text="Join a game" />
+                    <TextBlock Text="Got a code from a friend? Paste it and join."
+                               Opacity="0.6" FontSize="12" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding JoinCode}"
+                                 Watermark="Invite code" MaxLength="8"
+                                 FontFamily="Consolas,monospace" FontSize="16" />
+                        <TextBox Grid.Column="1" Width="170" Margin="8,0,0,0"
+                                 Text="{Binding JoinCodePassword}" PasswordChar="●"
+                                 Watermark="Password (if any)" />
+                    </Grid>
+                    <Button Classes="Primary accent" HorizontalAlignment="Stretch"
+                            Content="Join game"
+                            Command="{Binding JoinWithCodeCommand}"
+                            IsEnabled="{Binding CanJoin}" />
+                </StackPanel>
+            </Border>
+
+            <!-- Public games (open lobbies) -->
+            <Border Classes="Card" Margin="0,0,0,16">
+                <StackPanel Spacing="10">
+                    <TextBlock Classes="SectionHeader" Text="Public games" />
+                    <TextBlock Text="Open games you can join right now. Pick one, then click Join."
+                               Opacity="0.6" FontSize="12" />
+
+                    <!-- Search by name + manual refresh -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding Shell.LobbySearch, Mode=TwoWay}"
+                                 Watermark="Search games by name" />
+                        <Button Grid.Column="1" Margin="8,0,0,0" MinWidth="44"
+                                Command="{Binding Shell.RefreshLobbiesCommand}"
+                                ToolTip.Tip="Refresh the list">
+                            <TextBlock Text="&#xE72C;" FontFamily="{StaticResource SymbolThemeFontFamily}" />
+                        </Button>
+                    </Grid>
+
+                    <Border Height="170"
+                            Background="{DynamicResource ControlFillColorDefaultBrush}"
+                            CornerRadius="6">
+                        <Grid>
+                            <ListBox ItemsSource="{Binding Shell.FilteredLobbies}"
+                                     SelectedItem="{Binding SelectedLobby, Mode=TwoWay}"
+                                     Background="Transparent"
+                                     IsVisible="{Binding Shell.HasLobbies}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:LobbyRowViewModel">
+                                        <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" Margin="4">
+                                            <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Players}" Opacity="0.75" Margin="10,0" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="2" Text="{Binding Status}" Opacity="0.6" Margin="10,0" VerticalAlignment="Center" />
+                                            <Border Grid.Column="3" IsVisible="{Binding HasMods}"
+                                                    Background="#40FFC107"
+                                                    CornerRadius="4" Padding="6,1" Margin="10,0,0,0" VerticalAlignment="Center"
+                                                    ToolTip.Tip="{Binding ModTooltip}">
+                                                <TextBlock Text="{Binding ModBadge}" FontSize="11" Foreground="#FFE6B800" />
+                                            </Border>
+                                            <TextBlock Grid.Column="4" Text="{Binding LockGlyph}"
+                                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                                       Margin="10,0,4,0" VerticalAlignment="Center" Opacity="0.8" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <TextBlock IsVisible="{Binding !Shell.HasLobbies}"
+                                       Text="No open games right now. Host one above!"
+                                       Opacity="0.5"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <TextBlock IsVisible="{Binding Shell.NoLobbyMatches}"
+                                       Text="No games match your search."
+                                       Opacity="0.5"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding JoinPassword}" PasswordChar="●"
+                                 Watermark="Password (only if the game is locked)" />
+                        <Button Grid.Column="1" Margin="8,0,0,0" MinWidth="100"
+                                Content="Join"
+                                Command="{Binding JoinSelectedCommand}"
+                                IsEnabled="{Binding CanJoinSelected}" />
+                    </Grid>
+
+                    <!-- Mod parity for the selected host: install/order hints, never files. -->
+                    <TextBlock Text="{Binding ModParityMessage}"
+                               IsVisible="{Binding HasModParityMessage}"
+                               TextWrapping="Wrap" FontSize="12" Opacity="0.85" Margin="0,2,0,0" />
+                </StackPanel>
+            </Border>
+
+            <!-- Advanced: play directly on a LAN or by IP (port-forward for internet). Tucked
+                 away so the common code/public-list flow stays front and centre. -->
+            <Expander Header="Play on LAN or by IP (advanced)" Margin="0,0,0,16">
+                <StackPanel Spacing="10" Margin="0,8,0,0">
+                    <TextBlock Text="Host on your own connection and send your address to a friend. This game is private and never shows up in the public list."
+                               Opacity="0.6" FontSize="12" TextWrapping="Wrap" />
+
+                    <CheckBox Content="Host over the internet (forward UDP 7777 on your router)"
+                              IsChecked="{Binding InternetHost}" />
+
+                    <Button HorizontalAlignment="Stretch"
+                            Content="Host on my IP"
+                            Command="{Binding HostDirectCommand}"
+                            IsEnabled="{Binding CanDirect}" />
+
+                    <!-- Invite address (shown after hosting directly) -->
+                    <Border IsVisible="{Binding HasInvite}"
+                            Background="{DynamicResource ControlFillColorDefaultBrush}"
+                            CornerRadius="6" Padding="12,10">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Send this address to your friend:" Opacity="0.7" FontSize="12" />
+                            <Grid ColumnDefinitions="*,Auto">
+                                <SelectableTextBlock Grid.Column="0"
+                                                     Text="{Binding InviteAddress}"
+                                                     FontFamily="Consolas,monospace" FontSize="15" FontWeight="Bold"
+                                                     VerticalAlignment="Center" TextWrapping="Wrap" />
+                                <Button Grid.Column="1" Content="Copy" Click="OnCopyInvite" VerticalAlignment="Center" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Separator Margin="0,4" />
+
+                    <TextBlock Classes="FieldLabel" Text="Join a friend by IP" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding JoinIp}"
+                                 Watermark="e.g. 1.2.3.4:7777 or a pulsar:// invite" />
+                        <Button Grid.Column="1" Margin="8,0,0,0" MinWidth="100"
+                                Content="Join by IP"
+                                Command="{Binding JoinByIpCommand}"
+                                IsEnabled="{Binding CanDirect}" />
+                    </Grid>
+                </StackPanel>
+            </Expander>
+
+            <!-- Activity (small, for troubleshooting) -->
+            <Expander Header="Activity log">
+                <TextBox Height="120"
+                         IsReadOnly="True"
+                         AcceptsReturn="True"
+                         TextWrapping="NoWrap"
+                         FontFamily="Consolas,monospace"
+                         FontSize="12"
+                         Text="{Binding Shell.LogText}"
+                         VerticalContentAlignment="Top" />
+            </Expander>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

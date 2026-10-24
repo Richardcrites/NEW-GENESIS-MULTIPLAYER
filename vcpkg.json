@@ -1,0 +1,27 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "pulsar",
+  "version-string": "0.1.0",
+  "description": "PULSAR - Co-op Mod for Starfield",
+  "dependencies": [
+    "fmt",
+    {
+      "name": "spdlog",
+      "features": ["wchar"]
+    },
+    "enet",
+    "minhook",
+    "zlib",
+    {
+      "name": "imgui",
+      "features": ["docking-experimental", "dx12-binding", "win32-binding"]
+    }
+  ],
+  "vcpkg-configuration": {
+    "default-registry": {
+      "kind": "git",
+      "baseline": "c82f74667287d3dc386bce81e44964370c91a289",
+      "repository": "https://github.com/microsoft/vcpkg"
+    }
+  }
+}

@@ -1,0 +1,61 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Pulsar.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="680" d:DesignHeight="620"
+             x:Class="Pulsar.Views.VoiceChatView"
+             x:DataType="vm:VoiceChatViewModel"
+             Focusable="True">
+
+    <ScrollViewer Padding="32,28">
+        <StackPanel Spacing="16" MaxWidth="620" HorizontalAlignment="Left">
+
+            <TextBlock Classes="PageTitle" Text="Voice Chat" />
+            <TextBlock Classes="PageSubtitle"
+                       Text="Proximity voice over the co-op connection. Louder up close, muted across cells. Turn on Always audible to just talk with a stranger you joined." />
+
+            <Border Classes="Card">
+                <StackPanel Spacing="12">
+                    <ToggleSwitch Content="Enable voice chat" IsChecked="{Binding Enabled}" />
+                    <ToggleSwitch Content="Push-to-Talk (off = open mic)" IsChecked="{Binding PushToTalk}" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" Text="Push-to-Talk key" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Command="{Binding BindPttCommand}"
+                                Content="{Binding PttKeyLabel}" MinWidth="150"
+                                HorizontalContentAlignment="Center" />
+                    </Grid>
+                    <ToggleSwitch Content="Always audible (ignore distance and cells)"
+                                  IsChecked="{Binding AlwaysAudible}" />
+                </StackPanel>
+            </Border>
+
+            <Border Classes="Card">
+                <StackPanel Spacing="12">
+                    <TextBlock Classes="SectionHeader" Text="Microphone and levels" />
+                    <ComboBox HorizontalAlignment="Stretch"
+                              ItemsSource="{Binding InputDevices}"
+                              SelectedItem="{Binding InputDevice}"
+                              PlaceholderText="Default microphone" />
+                    <TextBlock Text="Live input (speak - the bar should move)" />
+                    <ProgressBar Minimum="0" Maximum="100" Value="{Binding MicLevel}" Height="10" />
+                    <TextBlock Text="Mic volume" />
+                    <Slider Minimum="0" Maximum="2" Value="{Binding InputVolume}" />
+                    <TextBlock Text="Speaker volume" />
+                    <Slider Minimum="0" Maximum="2" Value="{Binding OutputVolume}" />
+                </StackPanel>
+            </Border>
+
+            <Border Classes="Card">
+                <StackPanel Spacing="12">
+                    <TextBlock Classes="SectionHeader" Text="Proximity range" />
+                    <TextBlock Text="Full volume within (game units)" />
+                    <Slider Minimum="100" Maximum="2000" Value="{Binding DNear}" />
+                    <TextBlock Text="Silent beyond (game units)" />
+                    <Slider Minimum="1000" Maximum="10000" Value="{Binding DFar}" />
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- PULSAR Lobby GUI (Teil 3, external companion front-end). A thin WinForms
+       client over the existing `serve` daemon's JSON protocol in
+       %LOCALAPPDATA%\PULSAR: reads pulsar_lobbies.json, writes pulsar_cmd.json,
+       reads pulsar_ack.json. No SpacetimeDB dependency - the daemon owns the
+       connection. The GUI spawns `PulsarCompanion serve` as a child process. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>PulsarCompanionGui</RootNamespace>
+    <AssemblyName>PulsarLobby</AssemblyName>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+</Project>

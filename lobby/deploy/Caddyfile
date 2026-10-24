@@ -1,0 +1,35 @@
+# Caddy auto-provisions a Let's Encrypt cert for $DOMAIN and transparently
+# upgrades the WebSocket (wss) to the internal spacetimedb:3000. No manual
+# cert and no special Upgrade/Connection headers needed in Caddy v2.
+
+{
+	email {$ACME_EMAIL}
+	# rate_limit is a plugin directive (build Caddy via Dockerfile.caddy); place it in the chain.
+	order rate_limit before reverse_proxy
+}
+
+{$DOMAIN} {
+	# Per-IP request throttle (anti-flood): blunts anonymous account/connection floods
+	# (a script minting throwaway SpacetimeDB identities). A reducer cannot see the
+	# client IP, so this IP-level limit lives at the edge. Generous: a player opens ONE
+	# long-lived wss per session and reducer calls ride that socket (not counted), so
+	# normal play never hits it; over-limit returns 429. Tune events/window as needed.
+	rate_limit {
+		zone perip {
+			key    {http.request.remote_host}
+			events 60
+			window 1m
+		}
+	}
+	reverse_proxy spacetimedb:3000
+}
+
+# Live monitoring dashboard on a separate sslip.io subdomain (own Let's Encrypt
+# cert, resolves to the same IP). Protected by basic-auth - change the user via
+# `caddy hash-password` and update the hash below.
+monitor.{$DOMAIN} {
+	basic_auth {
+		pulsar $2a$14$uT6bz5f/VH6wtm.g7rSM1.EEAimuvsKPYapbQ1rMMIOefLh3Ryie6
+	}
+	reverse_proxy monitor:8090
+}

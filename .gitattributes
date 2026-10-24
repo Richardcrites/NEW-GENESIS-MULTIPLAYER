@@ -1,0 +1,8 @@
+* text=auto
+
+*.esp  binary
+*.ba2  binary
+*.pex  binary
+*.ico  binary
+
+*.patch text eol=lf

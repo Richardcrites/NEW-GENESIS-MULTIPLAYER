@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- PULSAR - modern unified control tool (Avalonia 11 + FluentAvalonia, Fluent
+       DARK theme, MVVM). Replaces the WinForms companion-gui as the primary
+       front-end; the WinForms build stays as a fallback. Talks to the existing
+       `lobby/companion` daemon via the file-handoff contract in
+       %LOCALAPPDATA%\PULSAR (pulsar_cmd.json / pulsar_ack.json /
+       pulsar_lobbies.json). No SpacetimeDB dependency here - the daemon owns the
+       connection. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Pulsar</RootNamespace>
+    <AssemblyName>Pulsar</AssemblyName>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <!-- Tool version used by the update checker (compared to the latest GitHub release).
+         0.2.0 was a pre-release dev number; the public line is 0.1.x (first public release
+         was 0.1.0). This is 0.1.1 (master-flagged PULSAR.esp + Plugins.txt load mechanism). -->
+    <Version>0.3.0</Version>
+    <AssemblyVersion>0.3.0.0</AssemblyVersion>
+    <FileVersion>0.3.0.0</FileVersion>
+    <!-- AV reputation: a binary with NO FileDescription/Company looks anonymous and trips
+         heuristics. Fill the version-resource fields. (Does not replace code signing, but
+         removes the "blank publisher" smell.) -->
+    <Company>PULSAR</Company>
+    <Product>PULSAR</Product>
+    <Authors>PULSAR</Authors>
+    <!-- AssemblyTitle -> Win32 FileDescription, which SmartScreen/UAC show as the app name. -->
+    <AssemblyTitle>PULSAR co-op tool</AssemblyTitle>
+    <Description>PULSAR - Starfield co-op control tool (lobby, relays, character, launch).</Description>
+    <Copyright>Copyright (c) 2026 PULSAR</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.17" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.17" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.17" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.17" />
+    <!-- Diagnostics only in Debug (Avalonia DevTools). -->
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.17">
+      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAvaloniaUI" Version="2.4.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <!-- voice: microphone device enumeration for the VoiceChat tab -->
+    <PackageReference Include="NAudio" Version="2.2.1" />
+  </ItemGroup>
+
+</Project>

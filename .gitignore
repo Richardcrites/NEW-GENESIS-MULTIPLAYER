@@ -1,0 +1,20 @@
+# Build output
+build/
+out/
+contrib/
+
+# Visual Studio
+.vs/
+*.user
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+
+# .NET
+bin/
+obj/
+
+# Lokale Konfiguration
+*.local.json
+.env

@@ -1,0 +1,52 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Pulsar.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="680" d:DesignHeight="520"
+             x:Class="Pulsar.Views.BugReportView"
+             x:DataType="vm:BugReportViewModel">
+
+    <ScrollViewer Padding="32,28">
+        <StackPanel Spacing="12" MaxWidth="640" HorizontalAlignment="Left">
+
+            <TextBlock Classes="PageTitle" Text="Report a bug" />
+            <TextBlock Classes="PageSubtitle"
+                       Text="Two quick steps help us fix problems fast." />
+
+            <Border Padding="16" CornerRadius="8"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="1. Collect diagnostics" FontWeight="SemiBold" />
+                    <TextBlock TextWrapping="Wrap" Opacity="0.8"
+                               Text="This bundles the game log and any crash details into one small ZIP on your Desktop. It contains no personal files." />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="Collect diagnostics"
+                                Command="{Binding SendDiagnosticsCommand}"
+                                IsEnabled="{Binding !DiagBusy}" />
+                        <Button Content="Show file"
+                                Command="{Binding ShowDiagnosticsFileCommand}"
+                                IsVisible="{Binding HasDiagFile}" />
+                    </StackPanel>
+                    <TextBlock TextWrapping="Wrap" Opacity="0.7"
+                               Text="{Binding DiagStatus}"
+                               IsVisible="{Binding DiagStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                </StackPanel>
+            </Border>
+
+            <Border Padding="16" CornerRadius="8"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="2. Open the issue tracker" FontWeight="SemiBold" />
+                    <TextBlock TextWrapping="Wrap" Opacity="0.8"
+                               Text="Describe what happened, what you were doing when it broke, and attach the ZIP from step 1." />
+                    <Button Content="Open issue tracker"
+                            Command="{Binding OpenIssueTrackerCommand}" />
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

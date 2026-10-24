@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Pulsar.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="680" d:DesignHeight="620"
+             x:Class="Pulsar.Views.AboutView"
+             x:DataType="vm:AboutViewModel">
+
+    <StackPanel Margin="32,28" Spacing="0" MaxWidth="560" HorizontalAlignment="Left">
+        <TextBlock Classes="PageTitle" Text="About" />
+
+        <Border Classes="Card">
+            <StackPanel Spacing="10">
+                <TextBlock Text="{Binding AppName}" FontSize="28" FontWeight="Bold"
+                           Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                <TextBlock Text="{Binding Version}" Opacity="0.7" />
+                <Separator Margin="0,6" />
+                <TextBlock Text="{Binding Author}" FontWeight="SemiBold" />
+                <SelectableTextBlock Text="{Binding ProjectUrl}" Opacity="0.85" />
+                <Separator Margin="0,6" />
+                <TextBlock Text="PULSAR is free and always will be. It is open source under GPL-3.0; issues and pull requests are welcome."
+                           Opacity="0.7" FontSize="12" TextWrapping="Wrap" />
+                <Button Content="Project page (GitHub)"
+                        HorizontalAlignment="Left"
+                        Command="{Binding OpenProjectCommand}" />
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

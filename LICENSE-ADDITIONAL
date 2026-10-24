@@ -1,0 +1,66 @@
+PULSAR - Additional terms under Section 7 of the GNU GPL version 3
+==================================================================
+
+Copyright (C) 2026 ramisotti13-eng
+
+PULSAR is distributed under the GNU General Public License version 3 or
+later, the full text of which is in the file LICENSE.
+
+As permitted by Section 7 of that License, the following additional terms
+apply to the material in this repository whose copyright is held by
+ramisotti13-eng. They do not apply to third-party material, which remains
+under the terms of its own authors.
+
+Because Section 7 lists these categories as permitted additional terms,
+they may not be removed when this material is conveyed, and they carry
+over to modified versions.
+
+
+1. Preservation of attribution (GPL-3.0 Section 7b)
+---------------------------------------------------
+
+You must preserve the following attribution notice, together with a link
+to the original project:
+
+    Based on PULSAR by ramisotti13-eng
+    https://github.com/ramisotti13-eng/pulsar
+
+The notice must appear in the documentation of any work containing this
+material, and in any user-facing "About", "Credits", or equivalent view
+that such a work displays. Where a work displays no such view, the notice
+in the documentation is sufficient.
+
+
+2. Marking of modified versions (GPL-3.0 Section 7c)
+-----------------------------------------------------
+
+If you modify this material and convey the result, you must mark your
+version in a reasonable way as different from the original, so that users
+are not misled about which version they are running.
+
+You must not misrepresent the origin of this material.
+
+
+3. Names and branding (GPL-3.0 Section 7e)
+-------------------------------------------
+
+The name "PULSAR", the project logo, and the project's branding are not
+licensed for use as the primary name or identity of a modified version.
+
+You remain free to state accurately that your work is based on, derived
+from, or compatible with PULSAR. Naming a fork "PULSAR Reloaded" or
+"MyMod (PULSAR fork)" is fine; naming it plainly "PULSAR" so that users
+take it for the original is not.
+
+This term restricts trademark and naming use only. It places no
+restriction on your rights to use, study, modify, or redistribute the
+software itself, which are governed entirely by the GPL.
+
+
+Note for contributors
+---------------------
+
+These terms exist so that credit follows the work, not to restrict it.
+Everything the GPL guarantees you still applies: you may use this
+software for any purpose, study and change it, and redistribute it,
+including commercially. You simply have to say where it came from.

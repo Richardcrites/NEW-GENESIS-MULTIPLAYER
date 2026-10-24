@@ -1,0 +1,91 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Pulsar.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="680" d:DesignHeight="620"
+             x:Class="Pulsar.Views.ServersView"
+             x:DataType="vm:ServersViewModel">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="32,28">
+        <StackPanel Grid.Row="0">
+            <TextBlock Classes="PageTitle" Text="Connection relays (advanced)" />
+            <TextBlock Classes="PageSubtitle"
+                       Text="You normally do not need this: the tool already picks the best relay automatically. Use it only to choose one manually. 'Load' is the relay's current traffic (not player slots), and picking a relay never changes your character." />
+        </StackPanel>
+
+        <Border Grid.Row="1" Classes="Card" Padding="0">
+            <Grid>
+                <ListBox ItemsSource="{Binding Servers}"
+                         SelectedItem="{Binding SelectedServer, Mode=TwoWay}"
+                         Background="Transparent"
+                         IsVisible="{Binding HasServers}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ServerRowViewModel">
+                            <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="6">
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="1">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                        <!-- Verified badge: only when verified=true -->
+                                        <Border IsVisible="{Binding Verified}"
+                                                Background="#1F6F43" CornerRadius="4"
+                                                Padding="6,1" VerticalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <TextBlock Text="&#xE73E;"
+                                                           FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                                           FontSize="10" Foreground="White" VerticalAlignment="Center" />
+                                                <TextBlock Text="Verified" FontSize="11" Foreground="White" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
+                                <!-- Load traffic-light: green=ok, amber=busy, red=full, grey=no data -->
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
+                                            Margin="12,0" VerticalAlignment="Center"
+                                            ToolTip.Tip="Relay load (live sessions / soft cap). The tool auto-picks the least-loaded relay.">
+                                    <Ellipse Width="9" Height="9" Fill="{Binding LoadBrush}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding LoadText}" Opacity="0.7" MinWidth="46" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="{Binding Region}" Opacity="0.7" Margin="12,0" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="3" Text="{Binding Ping}" Opacity="0.7" Margin="12,0" MinWidth="56"
+                                           TextAlignment="Right" VerticalAlignment="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!-- Empty state -->
+                <StackPanel IsVisible="{Binding !HasServers}"
+                            VerticalAlignment="Center" HorizontalAlignment="Center"
+                            Spacing="8">
+                    <TextBlock Text="&#xE774;"
+                               FontFamily="{StaticResource SymbolThemeFontFamily}"
+                               FontSize="40" Opacity="0.35" HorizontalAlignment="Center" />
+                    <TextBlock Text="No verified relays online"
+                               FontSize="15" Opacity="0.7" HorizontalAlignment="Center" />
+                    <TextBlock Text="Verified relays appear here once the daemon is running. Enable 'Show community relays' below to also see unverified ones (use at your own risk)."
+                               FontSize="12" Opacity="0.45" HorizontalAlignment="Center" TextAlignment="Center"
+                               MaxWidth="420" TextWrapping="Wrap" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Connect bar -->
+        <StackPanel Grid.Row="2" Margin="0,14,0,0" Spacing="8">
+            <!-- SECURITY (F4): verified-only by default; opt in to community relays here. -->
+            <CheckBox Content="Show community relays (unverified - route at your own risk)"
+                      IsChecked="{Binding ShowCommunity, Mode=TwoWay}" />
+            <TextBlock Text="{Binding CommunityWarning}" FontSize="12" Foreground="#E0A33A"
+                       TextWrapping="Wrap"
+                       IsVisible="{Binding CommunityWarning, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            <TextBlock Text="{Binding ConnectNote}" FontSize="12" Opacity="0.7"
+                       TextWrapping="Wrap"
+                       IsVisible="{Binding ConnectNote, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            <Button Content="Connect"
+                    Classes="accent"
+                    HorizontalAlignment="Right"
+                    IsEnabled="{Binding SelectedServer, Converter={x:Static ObjectConverters.IsNotNull}}"
+                    Command="{Binding ConnectCommand}" />
+        </StackPanel>
+    </Grid>
+</UserControl>

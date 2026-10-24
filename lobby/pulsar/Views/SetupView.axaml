@@ -1,0 +1,141 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Pulsar.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="680" d:DesignHeight="620"
+             x:Class="Pulsar.Views.SetupView"
+             x:DataType="vm:SetupViewModel">
+
+    <Grid RowDefinitions="Auto,*" Margin="32,28">
+
+        <!-- Header + banner + actions -->
+        <StackPanel Grid.Row="0" Spacing="0">
+            <TextBlock Classes="PageTitle" Text="Setup" />
+            <TextBlock Classes="PageSubtitle"
+                       Text="One-time install for the PULSAR co-op Alpha. Click Install to copy the mod into Starfield and turn on the settings it needs, then the checks below confirm everything." />
+
+            <!-- One-click install: copies the bundled mod into the game + applies ini fixes -->
+            <Border CornerRadius="8" Padding="14,12" Margin="0,8,0,14"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Install PULSAR into Starfield" FontWeight="SemiBold" />
+                    <TextBlock Text="Copies the co-op mod files into your game and turns on the required settings in one click. Close Starfield first."
+                               FontSize="12" Opacity="0.75" TextWrapping="Wrap" />
+                    <Button Content="Install mod" Classes="accent"
+                            HorizontalAlignment="Left"
+                            Command="{Binding InstallModCommand}" />
+                    <TextBlock Text="{Binding InstallStatus}"
+                               IsVisible="{Binding InstallStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                               FontSize="12" Opacity="0.85" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <!-- Overall banner: green when all good, amber when issues remain -->
+            <Border CornerRadius="8" Padding="14,12" Margin="0,0,0,14"
+                    Background="#243B2A"
+                    BorderBrush="#2E7D32" BorderThickness="1"
+                    IsVisible="{Binding BannerIsGood}">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="&#xE73E;"
+                               FontFamily="{StaticResource SymbolThemeFontFamily}"
+                               FontSize="16" Foreground="#5BD17C" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding BannerText}" FontWeight="SemiBold"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+            </Border>
+            <Border CornerRadius="8" Padding="14,12" Margin="0,0,0,14"
+                    Background="#3A331F"
+                    BorderBrush="#E0A33A" BorderThickness="1"
+                    IsVisible="{Binding !BannerIsGood}">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="&#xE7BA;"
+                               FontFamily="{StaticResource SymbolThemeFontFamily}"
+                               FontSize="16" Foreground="#E0A33A" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding BannerText}" FontWeight="SemiBold"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+            <!-- Action bar -->
+            <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,14">
+                <TextBlock Grid.Column="0" Text="{Binding IniPathDisplay}"
+                           FontSize="12" Opacity="0.55" VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"
+                           ToolTip.Tip="{Binding IniPathDisplay}" />
+                <Button Grid.Column="1" Content="Re-check" Margin="8,0"
+                        Command="{Binding RecheckCommand}" />
+                <Button Grid.Column="2" Content="Fix all" Classes="accent"
+                        IsEnabled="{Binding AnyFixable}"
+                        Command="{Binding FixAllCommand}" />
+            </Grid>
+        </StackPanel>
+
+        <!-- Check rows -->
+        <Border Grid.Row="1" Classes="Card" Padding="6">
+            <ScrollViewer>
+                <ItemsControl ItemsSource="{Binding Checks}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:SetupCheckViewModel">
+                            <Border Padding="10,10" Margin="2"
+                                    Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                    CornerRadius="6">
+                                <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+
+                                    <!-- Status dot/glyph: one colored badge per status -->
+                                    <Panel Grid.Column="0" Width="28" Height="28"
+                                           Margin="0,0,12,0" VerticalAlignment="Top">
+                                        <!-- OK (green) -->
+                                        <Border CornerRadius="14" Background="#1F4A2B"
+                                                IsVisible="{Binding IsOk}">
+                                            <TextBlock Text="&#xE73E;"
+                                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                                       FontSize="13" Foreground="#5BD17C"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <!-- WARN (amber) -->
+                                        <Border CornerRadius="14" Background="#4A3A1A"
+                                                IsVisible="{Binding IsWarn}">
+                                            <TextBlock Text="&#xE7BA;"
+                                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                                       FontSize="13" Foreground="#E0A33A"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <!-- FAIL (red) -->
+                                        <Border CornerRadius="14" Background="#4A2222"
+                                                IsVisible="{Binding IsFail}">
+                                            <TextBlock Text="&#xEA39;"
+                                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                                       FontSize="13" Foreground="#E66A6A"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                    </Panel>
+
+                                    <!-- Name + detail -->
+                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" />
+                                        <TextBlock Text="{Binding Detail}" FontSize="12" Opacity="0.7"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+
+                                    <!-- Right actions: a download link (when a dependency is
+                                         missing, e.g. SFSE / Address Library) or the Fix button. -->
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                                                VerticalAlignment="Center" Margin="12,0,0,0">
+                                        <Button Content="{Binding LinkText}"
+                                                IsVisible="{Binding ShowLink}"
+                                                Command="{Binding OpenLinkCommand}" />
+                                        <Button Content="Fix" Classes="accent"
+                                                IsVisible="{Binding CanFix}"
+                                                Command="{Binding FixCommand}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

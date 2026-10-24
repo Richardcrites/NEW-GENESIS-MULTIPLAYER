@@ -1,0 +1,94 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Pulsar.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="680" d:DesignHeight="620"
+             x:Class="Pulsar.Views.HelpView"
+             x:DataType="vm:HelpViewModel">
+
+    <ScrollViewer Padding="32,28">
+        <StackPanel Spacing="8" MaxWidth="640" HorizontalAlignment="Left">
+
+            <TextBlock Classes="PageTitle" Text="Help" />
+            <TextBlock Classes="PageSubtitle"
+                       Text="Quick answers to the most common questions." />
+
+            <Expander Header="How do I play with a friend?" IsExpanded="True">
+                <TextBlock TextWrapping="Wrap" Margin="0,4"
+                           Text="Type your name once. Then either click 'Host a game' and send your friend the invite code, or paste a friend's code under 'Join a game' and click Join. Starfield starts by itself. That is the whole flow." />
+            </Expander>
+
+            <Expander Header="What is a relay?">
+                <TextBlock TextWrapping="Wrap" Margin="0,4"
+                           Text="A relay is a small helper server that passes game data between you and your friend when a direct connection is not possible (very common with home routers). The tool picks the best relay for you automatically, so you do not have to choose anything. A relay only carries traffic. It never changes your character." />
+            </Expander>
+
+            <Expander Header="How do I connect? Do I have to start anything?">
+                <TextBlock TextWrapping="Wrap" Margin="0,4"
+                           Text="No. The tool connects on its own when you open it. The dot at the bottom left shows the status: green means connected. If it shows Offline, a Reconnect button appears on the Co-op page." />
+            </Expander>
+
+            <Expander Header="It says Offline or will not connect.">
+                <TextBlock TextWrapping="Wrap" Margin="0,4"
+                           Text="Check your internet connection and click Reconnect on the Co-op page. Wait a few seconds and try again. If you use a VPN or a strict firewall, allow this tool through it." />
+            </Expander>
+
+            <Expander Header="My friend cannot join with my code.">
+                <TextBlock TextWrapping="Wrap" Margin="0,4"
+                           Text="Make sure they typed the exact code with no spaces. The code only works while you are hosting (you can see the code on screen). If you set a password, your friend has to enter the same password." />
+            </Expander>
+
+            <Expander Header="It says my name is taken.">
+                <TextBlock TextWrapping="Wrap" Margin="0,4"
+                           Text="Someone else already uses that name. Pick a different name in the 'Your name' field on the Co-op page." />
+            </Expander>
+
+            <Expander Header="Starfield does not start.">
+                <TextBlock TextWrapping="Wrap" Margin="0,4"
+                           Text="Open the 'Game' section on the Co-op page and set the path to sfse_loader.exe (or Starfield.exe), then press Launch. If you are not sure the mod is installed correctly, open the Setup page: it checks everything and fixes the common settings for you." />
+            </Expander>
+
+            <Expander Header="Does hosting or a relay change my character?">
+                <TextBlock TextWrapping="Wrap" Margin="0,4"
+                           Text="No. Your character belongs to your account and stays the same no matter which relay is used. Relays only move game traffic between players." />
+            </Expander>
+
+            <Expander Header="What is 'Advanced' in Settings?">
+                <TextBlock TextWrapping="Wrap" Margin="0,4"
+                           Text="Extra options most people never need: choosing a relay by hand and remapping the in-game keys. Leave it off unless you know you need it. When you turn it on, two extra pages appear in the menu." />
+            </Expander>
+
+            <Expander Header="Do I need to set anything up the first time?">
+                <TextBlock TextWrapping="Wrap" Margin="0,4"
+                           Text="Run the Setup page once. It checks that the mod is installed correctly and turns on the few game settings co-op needs. After that you just type your name and host or join." />
+            </Expander>
+
+            <Expander Header="Windows blocked the app / my antivirus flagged it.">
+                <TextBlock TextWrapping="Wrap" Margin="0,4"
+                           Text="PULSAR is new, so Windows may show 'Windows protected your PC' the first time. Click 'More info' then 'Run anyway'. This is because the app is not yet widely downloaded, not because anything is wrong; the warning fades as more people use it. If your antivirus quarantines a file, restore it and add an exclusion for the PULSAR folder, or report it on the Report a bug page so we can get it cleared." />
+            </Expander>
+
+            <Expander Header="How do I keep the tool and mod up to date?">
+                <TextBlock TextWrapping="Wrap" Margin="0,4"
+                           Text="Open the Updates page. The tool and the mod are separate, so they have their own version and patch notes. A new mod can be installed with one click; for a new tool version, use 'Open release page' and download it (a running program can't replace itself)." />
+            </Expander>
+
+            <Expander Header="Can I play on a LAN or without the official server?">
+                <TextBlock TextWrapping="Wrap" Margin="0,4"
+                           Text="Yes. On the Co-op page use 'Play directly': host on your own IP and send your friend your IP and port (for play over the internet you also forward that port on your router). A direct game does not use the official server or a relay and is not listed publicly." />
+            </Expander>
+
+            <Expander Header="How do I back up my character?">
+                <TextBlock TextWrapping="Wrap" Margin="0,4"
+                           Text="Open Settings, 'Character backup'. Export saves your current character to a file you can keep; Import loads one back (it uploads on your next save, so be connected with Auto-save on). The tool also keeps a few automatic backups whenever your character is saved." />
+            </Expander>
+
+            <Expander Header="Something crashed or looks wrong. How do I report it?">
+                <TextBlock TextWrapping="Wrap" Margin="0,4"
+                           Text="Open the 'Report a bug' page. Click 'Collect diagnostics' to bundle the logs into one ZIP on your Desktop, then 'Open issue tracker' and attach it with a short description of what you were doing. No personal files are included." />
+            </Expander>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
