@@ -94,6 +94,10 @@ public sealed class DaemonBridge : IDisposable
     public bool IsConnected => _daemon is { HasExited: false };
     public bool IsDaemonReady => _daemonReady;
 
+    // Genesis fork: the daemon runs without a lobby server (no address configured or it
+    // is down). Only "Play on LAN or by IP" works then.
+    public bool IsOffline { get; private set; }
+
     // ── daemon lifecycle ───────────────────────────────────────────────────────
     public bool Start(out string error)
     {
@@ -146,6 +150,11 @@ public sealed class DaemonBridge : IDisposable
             {
                 if (e.Data == null) return;
                 Log?.Invoke("daemon: " + e.Data);
+                if (e.Data.Contains("[companion] OFFLINE:"))
+                {
+                    IsOffline = true;
+                    DaemonReady?.Invoke();   // refresh the status line
+                }
                 if (e.Data.Contains("subscribed"))
                 {
                     _daemonReady = true;
@@ -163,6 +172,7 @@ public sealed class DaemonBridge : IDisposable
             };
 
             _daemonReady = false;
+            IsOffline = false;
             _daemon.Start();
             _daemon.BeginOutputReadLine();
             _daemon.BeginErrorReadLine();

@@ -725,7 +725,9 @@ public partial class MainWindowViewModel : ObservableObject
     {
         bool c = _bridge.IsConnected;
         IsConnected = c;
-        ConnectionStatus = c ? "Connected" : "Disconnected";
+        ConnectionStatus = !c ? "Disconnected"
+            : _bridge.IsOffline ? "Offline: no lobby server. Use \"Play on LAN or by IP\" below."
+            : "Connected";
         if (NameClaimed)
             NameStatus = $"You are '{_config.PlayerName?.Trim()}'";
         else

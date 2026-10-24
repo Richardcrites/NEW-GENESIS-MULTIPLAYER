@@ -47,11 +47,38 @@ PULSAR shows a warning in the lobby browser when the mod lists differ.
    copies PULSAR into the Stock Game `Data` folder and enables `PULSAR.esp` in the
    Genesis profile's `plugins.txt` (a `.pulsar.bak` backup is made first). If the profile
    uses its own game INI files, the INI fixes go to the profile's `StarfieldCustom.ini`.
-4. Host and join as described in [README.md](README.md). Let the PULSAR tool launch the
-   game. It starts it through MO2 for you, and it closes your lobby when the game exits.
+4. Connect. Let the PULSAR tool launch the game: it starts it through MO2 for you.
 
 Start from a **fresh save made inside Genesis**. Saves from vanilla Starfield or from a
 different Genesis version will not line up.
+
+## Connecting: Play on LAN or by IP
+
+These sources have no lobby server address built in (upstream's release doesn't either),
+so the status line reads **Offline: no lobby server**. Host codes and the public game
+list need a lobby server. Direct play does not:
+
+**Host:**
+1. On the **Co-op** page, open **Play on LAN or by IP (advanced)**.
+2. Same house or network: leave **Host over the internet** unticked.
+   Over the internet: tick it, and forward **UDP port 7777** on your router to your PC.
+   Also allow `Starfield.exe` through Windows Firewall when Windows asks.
+3. Click **Host on my IP**. Starfield launches. Copy the address the tool shows
+   (for example `203.0.113.7:7777`) and send it to your friend.
+4. Load your Genesis save and wait in game.
+
+**Joiner:**
+1. Same expander. Paste the host's address into **Join a friend by IP** and click
+   **Join by IP**. Starfield launches.
+2. Load a Genesis save. Both players must be **in game with a save loaded**, not at the
+   main menu. Then the host's game is sent over. That can take a while, so let it finish.
+
+Press **F8** in game to regroup at the host.
+
+Offline, your character is backed up locally (`%LOCALAPPDATA%\PULSAR\pulsar_profile_mirror_offline.json`)
+and loaded the next time you join by IP. To get host codes back, host a lobby server
+yourself (`lobby/deploy`, see [BUILD.md](BUILD.md)) and enter its address under
+**Settings → Official server URI**.
 
 ## What this fork changes
 
@@ -63,6 +90,7 @@ different Genesis version will not line up.
 | Plugin: NPC spawn | The Papyrus side looks forms up by plugin-local ID in official plugins only. For a Genesis NPC it spawned an unrelated vanilla form and disabled an unrelated vanilla ref. | The C++ side checks what Papyrus would resolve to and skips the request unless it is the intended form. The client then keeps its own copy of that NPC. (`src/NPCSync/NPCSync.cpp`, `PluginLookup::PapyrusFindFormInAnyPlugin`) |
 | Plugin: items and world state | When the host named a plugin the client didn't load, every receive path fell back to the host's raw FormID. On the client that ID belongs to some other mod, so loot, container takes, keys, equipment, corpse loot, consumed items and weather could become the wrong form. Your saved character's items could do the same when a mod went missing. | `PluginLookup::ResolveFromPeer` only uses the raw ID when it really belongs to the same plugin locally. Anything else is dropped with a log line. |
 | Tool: mod-match check | Only reported mods the joiner was missing. A long Genesis list is cut to 4 KB by the lobby, so the tail was never compared. | Also reports mods only the joiner has and compares mod counts. It says when the host list was cut short, and also warns when one side is vanilla. |
+| Tool + companion: no lobby server | No lobby address ships in the sources, so the companion quit on the connect error. Then even "Play on LAN or by IP", which never needs the server, was greyed out. | The companion stays up offline for direct host/join, keeps a local character backup, and rejects lobby-only actions with a clear message. The status line says Offline. |
 | Tool: MO2 safety | Editing the profile while MO2 is open gets undone when MO2 exits. A profile switched in MO2 wasn't noticed. | Install and Fix wait until MO2 is closed. `ModOrganizer.ini` is re-read when it changes. `PULSAR.esp` is also added to `loadorder.txt`. |
 
 ## Known limits

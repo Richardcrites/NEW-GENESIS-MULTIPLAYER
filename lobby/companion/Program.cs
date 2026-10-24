@@ -112,6 +112,12 @@ internal static class Program
     private static long s_profileOutSig = -1;
 
     private static bool s_done;
+    // Genesis fork: serve keeps running without a lobby server. No lobby address ships in
+    // these sources (see OfficialEndpoint), so without a self-hosted lobby the daemon used
+    // to exit on the connect error and the tool disabled even "Play on LAN or by IP",
+    // which never needed the server. Offline, only direct host/join (with the local
+    // character mirror) and voice run.
+    private static bool s_offline;
     private static int s_exit;
     private static Process? s_gameProc;
 
@@ -260,6 +266,15 @@ internal static class Program
             .OnConnectError((Exception e) =>
             {
                 Console.WriteLine($"[companion] connect ERROR: {e.Message}");
+                if (cmd == "serve")
+                {
+                    s_offline = true;
+                    // Same as the online serve start: a profile-out left from an earlier
+                    // run is not a new capture.
+                    try { if (File.Exists(ProfileOutPath)) { var fi = new FileInfo(ProfileOutPath); s_profileOutSig = fi.LastWriteTimeUtc.Ticks ^ (fi.Length << 1); } } catch { }
+                    Console.WriteLine("[companion] OFFLINE: lobby server unreachable - LAN / IP play only (Play on LAN or by IP)");
+                    return;
+                }
                 // A stale identity token after a server --delete-data is rejected with
                 // 401. Clear it so the NEXT start gets a fresh identity (just press
                 // Start again) - no hunting for a hidden token file.
@@ -311,6 +326,15 @@ internal static class Program
             if (cmd == "serve") RefreshVoice();
             while (!s_done)
             {
+                if (s_offline)
+                {
+                    HandleCommandFileOffline(conn);
+                    MirrorProfileOffline();
+                    if (++voicePollTick >= 20) { voicePollTick = 0; RefreshVoice(); }
+                    if (s_gameProc is { HasExited: true }) { Console.WriteLine("[companion] game exited"); break; }
+                    Thread.Sleep(50);
+                    continue;
+                }
                 conn.FrameTick();
                 if (cmd == "serve")
                 {
@@ -722,6 +746,56 @@ internal static class Program
         catch (Exception ex) { Console.WriteLine($"[companion] serve: auto-save error: {ex.Message}"); }
     }
 
+    // serve, offline: direct host/join only. Everything else needs the lobby server.
+    private static void HandleCommandFileOffline(DbConnection c)
+    {
+        if (!File.Exists(CmdPath)) return;
+        string text;
+        try { text = File.ReadAllText(CmdPath); } catch { return; }
+
+        string cmdId = "", action = "";
+        try
+        {
+            using var doc = JsonDocument.Parse(text);
+            var root = doc.RootElement;
+            action = root.TryGetProperty("action", out var a) ? (a.GetString() ?? "") : "";
+            cmdId  = root.TryGetProperty("cmdId", out var i) ? (i.GetString() ?? "") : "";
+        }
+        catch { /* malformed: let the normal handler report it */ }
+
+        if (action == "hostDirect" || action == "joinDirect")
+        {
+            // Same code path as online; joinDirect's profile lookup falls back to the
+            // local mirror when there is no DB profile (ApplyProfileDbFirst with null).
+            HandleCommandFile(c);
+            return;
+        }
+        try { File.Delete(CmdPath); } catch { /* best-effort */ }
+        WriteAck(cmdId, false, "no lobby server - use Play on LAN or by IP", null);
+        Console.WriteLine($"[companion] serve(offline): '{action}' needs the lobby server - rejected");
+    }
+
+    // serve, offline: keep the local character mirror current, so progress made in a
+    // direct session is not lost and reaches the DB once a lobby server is available.
+    private static void MirrorProfileOffline()
+    {
+        if (!s_autoSave) return;
+        try
+        {
+            if (!File.Exists(ProfileOutPath)) return;
+            var fi = new FileInfo(ProfileOutPath);
+            long sig = fi.LastWriteTimeUtc.Ticks ^ (fi.Length << 1);
+            if (sig == s_profileOutSig) return;
+            s_profileOutSig = sig;
+            var blob = File.ReadAllBytes(ProfileOutPath);
+            if (blob.Length == 0) return;
+            uint version = (uint)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            WriteMirror(version, blob);
+            Console.WriteLine($"[companion] serve(offline): auto-saved profile ({blob.Length} bytes) v{version} to the local mirror");
+        }
+        catch (Exception ex) { Console.WriteLine($"[companion] serve(offline): auto-save error: {ex.Message}"); }
+    }
+
     // serve: pick up a DLL-written command (host/join), run the reducer, ack.
     private static void HandleCommandFile(DbConnection c)
     {
@@ -829,7 +903,8 @@ internal static class Program
                 }
                 else
                 {
-                    var mine = FindMyProfile(c); uint version = ApplyProfileDbFirst(c, mine);   // DB-first + local mirror, newest-wins
+                    var mine = s_offline ? null : FindMyProfile(c);
+                    uint version = ApplyProfileDbFirst(c, mine);   // DB-first + local mirror, newest-wins
                     WriteHandoff("client", addr, version, "", "");
                     WriteAck(cmdId, true, null, addr);
                     Console.WriteLine($"[companion] serve: join-direct -> {addr} (profile staged={mine is not null})");
@@ -907,6 +982,7 @@ internal static class Program
     // cross-contamination class. An identity has at least one non-zero hex digit.
     private static bool IdentityReady()
     {
+        if (s_offline) return true;   // offline mirror has its own fixed file, see MirrorId
         var s = s_identity.ToString();
         if (string.IsNullOrEmpty(s)) return false;
         foreach (var ch in s)
@@ -917,6 +993,10 @@ internal static class Program
 
     private static string MirrorId()
     {
+        // Offline there is no server-assigned identity. %LOCALAPPDATA%\PULSAR is already
+        // per Windows user, so one fixed offline file is safe; it is never mixed into the
+        // identity-keyed online mirror.
+        if (s_offline) return "offline";
         var id = s_identity.ToString() ?? "";
         if (string.IsNullOrWhiteSpace(id)) return "anon";
         foreach (var ch in Path.GetInvalidFileNameChars()) id = id.Replace(ch, '_');
