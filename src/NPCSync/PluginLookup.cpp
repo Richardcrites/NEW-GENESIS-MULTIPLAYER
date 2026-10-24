@@ -3,6 +3,7 @@
 
 #include "NASLog.h"
 #include <REL/Relocation.h>
+#include <RE/T/TESForm.h>
 #include <Windows.h>
 
 #include <atomic>
@@ -298,6 +299,32 @@ namespace Pulsar::NPCSync::PluginLookup
             if (slots.compileIdx == 0xFF) return 0;
             return (static_cast<uint32_t>(slots.compileIdx) << 24)
                  | (localID & 0xFFFFFFu);
+        }
+        return 0;
+    }
+
+    uint32_t PapyrusFindFormInAnyPlugin(uint32_t localID) noexcept
+    {
+        // Must stay in step with FindFormInAnyPlugin in PulsarRemoteControl.psc.
+        static constexpr const char* kPapyrusPlugins[] = {
+            "Starfield.esm",
+            "ShatteredSpace.esm",
+            "Constellation.esm",
+            "OldMars.esm",
+            "SFBGS003.esm",
+            "SFBGS004.esm",
+            "SFBGS006.esm",
+            "SFBGS007.esm",
+            "SFBGS008.esm",
+            "SFBGS00D.esm",
+            "SFBGS047.esm",
+            "SFBGS050.esm",
+            "BlueprintShips-Starfield.esm",
+            "BlueprintShips-SFBGS050.esm",
+        };
+        for (const char* name : kPapyrusPlugins) {
+            uint32_t fid = ResolveCrossPlugin(name, localID);
+            if (fid != 0 && RE::TESForm::LookupByID(fid)) return fid;
         }
         return 0;
     }

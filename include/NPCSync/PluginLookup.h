@@ -36,4 +36,14 @@ namespace Pulsar::NPCSync::PluginLookup
     // on this machine. The local ID's high bits (if any) are masked off
     // according to the file's encoding before reassembly.
     uint32_t ResolveCrossPlugin(const char* pluginName, uint32_t localID) noexcept;
+
+    // The client-local FormID that PulsarRemoteControl's FindFormInAnyPlugin will land
+    // on for `localID`: the first hit over Starfield.esm and its fixed list of official
+    // masters, in the script's order. 0 if none of them has a form there.
+    //
+    // The script only receives a plugin-local ID, so for a form from any other plugin
+    // (every Star Wars Genesis NPC and placed ref) it silently picks whatever vanilla
+    // form shares that local ID. Callers compare this against the FormID they mean
+    // and skip the Papyrus request when the two differ.
+    uint32_t PapyrusFindFormInAnyPlugin(uint32_t localID) noexcept;
 }

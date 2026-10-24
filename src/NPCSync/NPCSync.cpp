@@ -2684,6 +2684,39 @@ namespace Pulsar::NPCSync {
                         }
                     }
 
+                    // Genesis fork: Papyrus only gets a local ID and tries the official
+                    // plugins in a fixed order (FindFormInAnyPlugin). For a base or a
+                    // static ref from any other plugin (Star Wars Genesis NPCs and
+                    // their placements) it would spawn, or later Disable(), whatever
+                    // vanilla form shares that local ID. Hand over only what Papyrus
+                    // resolves to the intended form; otherwise the client keeps its
+                    // own native NPC (same modlist on both sides), unsynced.
+                    {
+                        const uint32_t intendedBase = (u.sourcePlugin[0] != '\0')
+                            ? Pulsar::NPCSync::PluginLookup::ResolveCrossPlugin(u.sourcePlugin, spawnLocalID)
+                            : hostStaticFormID;
+                        const uint32_t papyrusBase =
+                            Pulsar::NPCSync::PluginLookup::PapyrusFindFormInAnyPlugin(spawnLocalID);
+                        const bool staticRef = (u.refFormID & 0xFF000000) != 0xFF000000;
+                        const uint32_t papyrusRef = staticRef
+                            ? Pulsar::NPCSync::PluginLookup::PapyrusFindFormInAnyPlugin(
+                                  Pulsar::NPCSync::PluginLookup::FormIDToLocalID(u.refFormID))
+                            : u.refFormID;
+                        if (intendedBase == 0 || papyrusBase != intendedBase || papyrusRef != u.refFormID) {
+                            static uint64_t s_lastForeignLog = 0;
+                            uint64_t nowT = GetTickCount64();
+                            if (nowT - s_lastForeignLog > 3000) {
+                                s_lastForeignLog = nowT;
+                                PLOG_INFO("[PULSAR] NPCSync: skip Papyrus spawn hostRef=0x{:08X} plugin='{}' localID=0x{:08X} - non-official form (base intended=0x{:08X} papyrus=0x{:08X}, ref papyrus=0x{:08X})"sv,
+                                          u.refFormID,
+                                          u.sourcePlugin[0] ? u.sourcePlugin : "(empty)",
+                                          spawnLocalID, intendedBase, papyrusBase, papyrusRef);
+                            }
+                            skippedNoForm++;
+                            continue;
+                        }
+                    }
+
                     // Write flag-aware plugin-local ID + trigger Papyrus.
                     // Papyrus iterates {Starfield.esm, ShatteredSpace.esm, …} until
                     // one GetFormFromFile returns non-None.
