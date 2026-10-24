@@ -78,11 +78,19 @@ public static class PluginsReader
     }
 
     // Compare a host's mod list (pipe-joined) against the local active mods.
-    // Returns mods the local player is MISSING and whether the relative order differs.
-    public static (List<string> Missing, bool OrderDiffers) Compare(string hostList)
+    // Returns mods the local player is MISSING, mods only the local player has, whether the
+    // relative order differs, and whether the host's list was cut short by the lobby.
+    //
+    // Genesis fork: a modlist has hundreds of plugins, and the lobby caps the published
+    // names at 4 KB (CapModList), so the tail of the host's list is not visible. hostCount
+    // is the host's real count; when it is larger than the names received, extras can't be
+    // named exactly and the count difference is reported instead.
+    public static (List<string> Missing, List<string> Extra, bool OrderDiffers, bool Truncated)
+        Compare(string hostList, uint hostCount)
     {
         var host  = (hostList ?? "").Split('|', StringSplitOptions.RemoveEmptyEntries).ToList();
         var local = ActiveMods();
+        bool truncated = hostCount > host.Count;
         var localSet = new HashSet<string>(local, StringComparer.OrdinalIgnoreCase);
         var missing = host.Where(m => !localSet.Contains(m)).ToList();
 
@@ -94,6 +102,14 @@ public static class PluginsReader
         var localShared = local.Where(hostSet.Contains).ToList();
         bool orderDiffers = !hostShared.SequenceEqual(localShared, StringComparer.OrdinalIgnoreCase);
 
-        return (missing, orderDiffers);
+        // Extra local plugins still matter: one loaded ahead of shared ones shifts their
+        // load-order slots, and every raw FormID in the synced save with it. With a cut
+        // list only the ones placed before the cut can be named.
+        var extra = truncated
+            ? local.TakeWhile(m => localShared.Count == 0 || !string.Equals(m, localShared[^1], StringComparison.OrdinalIgnoreCase))
+                   .Where(m => !hostSet.Contains(m)).ToList()
+            : local.Where(m => !hostSet.Contains(m)).ToList();
+
+        return (missing, extra, orderDiffers, truncated);
     }
 }

@@ -175,6 +175,19 @@ public partial class MainWindowViewModel : ObservableObject
     public void TryAutoDetectGame()
     {
         var cur = _config.StarfieldPath?.Trim() ?? "";
+        // Genesis fork: in Mod Organizer mode the game is the instance's own copy. Never
+        // swap in a Steam install, or Install/Setup would target a different folder than
+        // the one MO2 launches.
+        if (Mo2Instance.Current is { } mo2)
+        {
+            if (!string.Equals(cur, mo2.GameExe, StringComparison.OrdinalIgnoreCase))
+            {
+                _config.StarfieldPath = mo2.GameExe;
+                _config.Save();
+                PlayPage.RaiseGamePathChanged();
+            }
+            return;
+        }
         if (cur.Length > 0 && File.Exists(cur)) return;   // already valid, leave it
         var found = GameLocator.FindStarfield();
         if (found != null)

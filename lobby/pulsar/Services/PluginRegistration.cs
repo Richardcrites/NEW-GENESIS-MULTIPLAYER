@@ -69,7 +69,26 @@ public static class PluginRegistration
     {
         var path = WritePath();
         BackupOnce(path);
-        return EnableAt(path);
+        if (!EnableAt(path)) return false;
+        // Under MO2 the plugin also has to be in the profile's loadorder.txt, or MO2 can
+        // drop it from plugins.txt the next time it rebuilds the list.
+        if (Mo2Instance.Current is { } mo2) AddToLoadOrderAt(mo2.LoadOrderTxt);
+        return true;
+    }
+
+    internal static void AddToLoadOrderAt(string path)
+    {
+        try
+        {
+            if (!File.Exists(path)) return;
+            var lines = new List<string>(File.ReadAllLines(path));
+            if (lines.Exists(l => LineNames(l, PluginName))) return;
+            BackupOnce(path);
+            lines.RemoveAll(l => l.Trim().Length > 0 && LineNames(l, AltName));
+            lines.Add(PluginName);
+            File.WriteAllLines(path, lines);
+        }
+        catch { /* best-effort; plugins.txt is the primary record */ }
     }
 
     // Delete every sTestFileN (N=1..10) in [General] that points at PULSAR's plugin. Returns

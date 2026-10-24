@@ -136,6 +136,7 @@ public partial class SetupViewModel : ViewModelBase
             InstallStatus = "Close Starfield first, then install.";
             return;
         }
+        if (Mo2Blocks()) { InstallStatus = Mo2RunningMessage; return; }
         // SFSE is required and we cannot ship it (licence). Make sure it is there first,
         // otherwise installing the DLL is pointless - point the user to the SFSE row's link.
         if (!File.Exists(Path.Combine(GameRoot!, "sfse_loader.exe")))
@@ -172,6 +173,7 @@ public partial class SetupViewModel : ViewModelBase
         // Apply every fixable row, then re-check once. We re-read keys each pass
         // because applying force-load depends on the current ini contents.
         if (!StarfieldPathOk()) return;
+        if (Mo2Blocks()) { _shell.Log("Setup: " + Mo2RunningMessage); return; }
         try
         {
             EnsureBackup();
@@ -192,6 +194,7 @@ public partial class SetupViewModel : ViewModelBase
     public void FixOne(SetupCheckViewModel row)
     {
         if (!StarfieldPathOk()) return;
+        if (Mo2Blocks()) { _shell.Log("Setup: " + Mo2RunningMessage); return; }
         if (!_keys.TryGetValue(row, out var key)) return;
         try
         {
@@ -294,6 +297,11 @@ public partial class SetupViewModel : ViewModelBase
     }
 
     // ── checks ──────────────────────────────────────────────────────────────────
+
+    // Genesis fork: MO2 writes its profile back when it exits, undoing our plugins.txt edit.
+    private static bool Mo2Blocks() => Mo2Instance.Current != null && Mo2Instance.Running();
+    private const string Mo2RunningMessage =
+        "Close Mod Organizer 2 first. It overwrites the profile's plugin list when it exits.";
 
     private bool StarfieldPathOk() => !string.IsNullOrEmpty(StarfieldExe) && File.Exists(StarfieldExe);
 

@@ -58,9 +58,11 @@ public partial class PlayViewModel : ViewModelBase
                 value = mo2.GameExe;
                 _shell.Log($"Using Mod Organizer 2 profile '{mo2.Profile}'. Game folder: {mo2.GamePath}");
             }
-            else if (_shell.Config.StarfieldPath != value && _shell.Config.Mo2Path.Length > 0)
+            else if (_shell.Config.Mo2Path.Length > 0 && _shell.Config.StarfieldPath != value &&
+                     System.IO.File.Exists(value))
             {
-                // A plain game exe was chosen: leave MO2 mode.
+                // A different game exe was chosen: leave MO2 mode. (Half-typed paths don't
+                // count, the text box updates this on every keystroke.)
                 _shell.Config.Mo2Path = "";
                 _shell.SaveConfig();
             }
@@ -136,21 +138,36 @@ public partial class PlayViewModel : ViewModelBase
 
     // Mod parity for the selected lobby: compares the host's mod list to ours. We never
     // copy mods, we just tell the joiner what to install + whether the order differs.
-    public bool HasModParityMessage => SelectedLobby?.HasMods == true;
+    // Shown when either side has mods: a vanilla host and a Genesis joiner is a mismatch too.
+    public bool HasModParityMessage =>
+        SelectedLobby is { } l && (l.HasMods || Pulsar.Services.PluginsReader.ActiveMods().Count > 0);
     public string ModParityMessage
     {
         get
         {
             var lob = SelectedLobby;
-            if (lob == null || !lob.HasMods) return "";
-            var (missing, orderDiffers) = Pulsar.Services.PluginsReader.Compare(lob.ModList);
-            if (missing.Count == 0 && !orderDiffers) return "Mods match this host. Good to go.";
+            if (lob == null || !HasModParityMessage) return "";
+            var (missing, extra, orderDiffers, truncated) =
+                Pulsar.Services.PluginsReader.Compare(lob.ModList, lob.ModCount);
+            int localCount = Pulsar.Services.PluginsReader.ActiveMods().Count;
+            bool countDiffers = localCount != lob.ModCount;
+            if (missing.Count == 0 && extra.Count == 0 && !orderDiffers && !countDiffers)
+                return truncated
+                    ? $"The first part of the host's {lob.ModCount} mods matches yours, and so does the count. The lobby only shows part of a long list, so compare the rest with the host."
+                    : "Mods match this host. Good to go.";
             var parts = new System.Collections.Generic.List<string>();
-            if (missing.Count > 0) parts.Add("You are missing: " + string.Join(", ", missing));
+            if (missing.Count > 0) parts.Add("You are missing: " + Shorten(missing));
+            if (extra.Count > 0) parts.Add("The host does not have: " + Shorten(extra));
+            if (countDiffers) parts.Add($"You have {localCount} mods, the host has {lob.ModCount}.");
             if (orderDiffers) parts.Add("Your load order differs from the host.");
             return string.Join("   ", parts);
         }
     }
+
+    private static string Shorten(System.Collections.Generic.List<string> names) =>
+        names.Count <= 10
+            ? string.Join(", ", names)
+            : string.Join(", ", names.GetRange(0, 10)) + $" and {names.Count - 10} more";
 
     public string HostButtonText => _shell.IsHosting ? "Stop hosting" : "Host a game";
     public bool CanHost => _shell.IsConnected && _shell.NameClaimed;

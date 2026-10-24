@@ -23,7 +23,26 @@ public sealed class Mo2Instance
 {
     // Set by AppConfig when Mo2Path changes. Static so the static Plugins.txt helpers
     // (PluginsReader / PluginRegistration) can see it without plumbing the config through.
-    public static Mo2Instance? Current { get; private set; }
+    // Re-read whenever ModOrganizer.ini changes, so switching the profile in MO2 while the
+    // tool is open is picked up instead of editing the old profile's plugins.txt.
+    private static string s_path = "";
+    private static DateTime s_iniStamp;
+    private static Mo2Instance? s_current;
+
+    public static Mo2Instance? Current
+    {
+        get
+        {
+            if (s_path.Length == 0) return null;
+            var stamp = IniStamp(s_path);
+            if (stamp != s_iniStamp)
+            {
+                s_iniStamp = stamp;
+                s_current = TryLoad(s_path);
+            }
+            return s_current;
+        }
+    }
 
     public string ExePath { get; }
     public string BaseDir { get; }
@@ -48,8 +67,31 @@ public sealed class Mo2Instance
         !string.IsNullOrWhiteSpace(path) &&
         string.Equals(Path.GetFileName(path.Trim()), "ModOrganizer.exe", StringComparison.OrdinalIgnoreCase);
 
-    public static void SetCurrent(string? mo2ExePath) =>
-        Current = string.IsNullOrWhiteSpace(mo2ExePath) ? null : TryLoad(mo2ExePath.Trim());
+    public static void SetCurrent(string? mo2ExePath)
+    {
+        s_path = (mo2ExePath ?? "").Trim();
+        s_iniStamp = IniStamp(s_path);
+        s_current = s_path.Length == 0 ? null : TryLoad(s_path);
+    }
+
+    private static DateTime IniStamp(string mo2ExePath)
+    {
+        try
+        {
+            if (mo2ExePath.Length == 0) return default;
+            var ini = Path.Combine(Path.GetDirectoryName(mo2ExePath) ?? "", "ModOrganizer.ini");
+            return File.Exists(ini) ? File.GetLastWriteTimeUtc(ini) : default;
+        }
+        catch { return default; }
+    }
+
+    // MO2 rewrites the profile's plugins.txt from its own state when it exits, so edits
+    // made while it runs are lost.
+    public static bool Running()
+    {
+        try { return System.Diagnostics.Process.GetProcessesByName("ModOrganizer").Length > 0; }
+        catch { return false; }
+    }
 
     // Parse the portable instance next to ModOrganizer.exe. Null when it is not a usable
     // Starfield instance.
@@ -88,6 +130,9 @@ public sealed class Mo2Instance
     }
 
     public string PluginsTxt => Path.Combine(ProfileDir, "plugins.txt");
+
+    // MO2 keeps the full order (enabled or not) here and rebuilds plugins.txt from it.
+    public string LoadOrderTxt => Path.Combine(ProfileDir, "loadorder.txt");
 
     // A profile with "local game settings" carries its own StarfieldCustom.ini, which MO2
     // maps over the Documents one. Null when the profile uses the global ini.
