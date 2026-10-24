@@ -1,4 +1,11 @@
-# PULSAR
+# PULSAR, Star Wars Genesis fork
+
+> **This is a modified version of PULSAR**, changed to work with the Star Wars Genesis
+> modlist (Mod Organizer 2 / Wabbajack). Setup, what changed, and known limits are in
+> [GENESIS.md](GENESIS.md). Everything below is the original upstream README.
+>
+> Based on PULSAR by ramisotti13-eng: https://github.com/ramisotti13-eng/pulsar
+
 
 ## I am not developing this any more, and it is open for anyone to take over
 
