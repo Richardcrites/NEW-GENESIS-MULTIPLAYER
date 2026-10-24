@@ -39,7 +39,10 @@ public static class PluginRegistration
 
     // %USERPROFILE%\Documents\My Games\Starfield\StarfieldCustom.ini (OneDrive-aware via
     // SpecialFolder.MyDocuments). The single source of truth for this path.
+    // Under Mod Organizer 2 a profile with local game settings has its own copy, which MO2
+    // maps over this one at launch, so edit that copy instead.
     public static string StarfieldCustomIniPath =>
+        Mo2Instance.Current?.ProfileCustomIni ??
         Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
             "My Games", "Starfield", "StarfieldCustom.ini");

@@ -565,6 +565,26 @@ public partial class MainWindowViewModel : ObservableObject
         // "DIRECT peer -> stop relay keepalive" path, which kills the real remote
         // friend's relay session (endless reason-0 reconnect loop). Ask, then close.
         if (!await EnsureNoGhostStarfieldAsync()) return;
+        // Genesis fork: a Mod Organizer 2 modlist only exists inside MO2's virtual file
+        // system, so the game has to be started by MO2 running its SFSE entry.
+        var mo2 = Mo2Instance.Current;
+        if (mo2 != null)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = mo2.ExePath,
+                    Arguments = mo2.LaunchArguments,
+                    UseShellExecute = true,
+                    WorkingDirectory = Path.GetDirectoryName(mo2.ExePath) ?? ""
+                });
+                Log($"Starfield launched through Mod Organizer 2 (profile '{mo2.Profile}', entry '{mo2.SfseTitle}').");
+                _ = WatchGameExitAsync();
+            }
+            catch (Exception ex) { Log("Launch through Mod Organizer 2 failed: " + ex.Message); }
+            return;
+        }
         // Co-op REQUIRES SFSE. Launching Starfield.exe directly bypasses SFSE, so the
         // PULSAR mod never injects and co-op silently does nothing. Whatever the path
         // points at (stale cache, manual pick, or locator fallback), always launch

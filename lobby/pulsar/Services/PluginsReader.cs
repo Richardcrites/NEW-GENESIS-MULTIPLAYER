@@ -17,6 +17,8 @@ public static class PluginsReader
         "Starfield.esm", "Constellation.esm", "OldMars.esm", "ShatteredSpace.esm",
         "BlueprintShips-Starfield.esm",
         "SFBGS003.esm", "SFBGS004.esm", "SFBGS006.esm", "SFBGS007.esm", "SFBGS008.esm",
+        // Official Creations the game ships and that the in-game spawn lookup also knows.
+        "SFBGS00D.esm", "SFBGS047.esm", "SFBGS050.esm", "BlueprintShips-SFBGS050.esm",
         "PULSAR.esp",   // our own co-op plugin (master-flagged) is part of the mod, not a user mod
     };
 
@@ -26,6 +28,14 @@ public static class PluginsReader
     // reader inspects.
     public static IEnumerable<string> Candidates()
     {
+        // Under Mod Organizer 2 the profile's plugins.txt is the real load order; MO2
+        // overwrites the LOCALAPPDATA copy with it every time it launches the game.
+        var mo2 = Mo2Instance.Current;
+        if (mo2 != null)
+        {
+            yield return mo2.PluginsTxt;
+            yield break;
+        }
         var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         if (!string.IsNullOrEmpty(local))
             yield return Path.Combine(local, "Starfield", "Plugins.txt");

@@ -31,7 +31,7 @@ public partial class PlayView : UserControl
 
         var files = await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Select Starfield / SFSE loader",
+            Title = "Select Starfield / SFSE loader, or ModOrganizer.exe for a Wabbajack modlist",
             AllowMultiple = false,
             FileTypeFilter = new List<FilePickerFileType>
             {

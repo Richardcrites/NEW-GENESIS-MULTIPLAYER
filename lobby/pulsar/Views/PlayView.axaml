@@ -57,7 +57,7 @@
                     <Grid ColumnDefinitions="*,Auto,Auto">
                         <TextBox Grid.Column="0"
                                  Text="{Binding StarfieldPath}"
-                                 Watermark="Found automatically. Use Detect or Browse if empty." />
+                                 Watermark="Found automatically. For Star Wars Genesis / Wabbajack, Browse to ModOrganizer.exe." />
                         <Button Grid.Column="1" Margin="8,0,0,0"
                                 Content="Detect"
                                 ToolTip.Tip="Search Steam libraries and common folders for Starfield"
@@ -66,6 +66,8 @@
                                 Content="Browse..."
                                 Command="{Binding BrowseCommand}" />
                     </Grid>
+                    <TextBlock Text="{Binding Mo2Status}" IsVisible="{Binding UsingMo2}"
+                               TextWrapping="Wrap" FontSize="12" Opacity="0.8" />
                     <Button HorizontalAlignment="Left" MinWidth="160"
                             Content="Launch Starfield"
                             Command="{Binding LaunchCommand}" />

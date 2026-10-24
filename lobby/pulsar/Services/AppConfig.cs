@@ -43,6 +43,20 @@ public sealed class AppConfig
 
     public string StarfieldPath { get; set; } = "";
 
+    // Genesis fork: ModOrganizer.exe of a Wabbajack/MO2 install (e.g. Star Wars Genesis).
+    // When set, the game is launched through MO2 and the MO2 profile's plugins.txt is the
+    // load order. StarfieldPath then points at the instance's game copy (see Mo2Instance).
+    private string _mo2Path = "";
+    public string Mo2Path
+    {
+        get => _mo2Path;
+        set
+        {
+            _mo2Path = value ?? "";
+            Mo2Instance.SetCurrent(_mo2Path);
+        }
+    }
+
     public bool AutoLaunch { get; set; } = true;
     public bool AutoSave { get; set; } = true;
 

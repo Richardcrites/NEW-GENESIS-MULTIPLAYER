@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Pulsar.Services;
 
 namespace Pulsar.ViewModels;
 
@@ -41,6 +42,28 @@ public partial class PlayViewModel : ViewModelBase
         get => _shell.Config.StarfieldPath;
         set
         {
+            // Genesis fork: picking ModOrganizer.exe switches to MO2 mode. The game path
+            // becomes the instance's own game copy so Install / Setup target the folder
+            // MO2 actually runs.
+            if (Mo2Instance.IsMo2Exe(value))
+            {
+                var mo2 = Mo2Instance.TryLoad(value.Trim());
+                if (mo2 == null)
+                {
+                    _shell.Log("That Mod Organizer 2 has no usable Starfield instance next to it (ModOrganizer.ini with a game path and profile).");
+                    return;
+                }
+                _shell.Config.Mo2Path = mo2.ExePath;
+                _shell.SaveConfig();
+                value = mo2.GameExe;
+                _shell.Log($"Using Mod Organizer 2 profile '{mo2.Profile}'. Game folder: {mo2.GamePath}");
+            }
+            else if (_shell.Config.StarfieldPath != value && _shell.Config.Mo2Path.Length > 0)
+            {
+                // A plain game exe was chosen: leave MO2 mode.
+                _shell.Config.Mo2Path = "";
+                _shell.SaveConfig();
+            }
             if (_shell.Config.StarfieldPath != value)
             {
                 _shell.Config.StarfieldPath = value;
@@ -48,8 +71,16 @@ public partial class PlayViewModel : ViewModelBase
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(GameNotFound));
             }
+            OnPropertyChanged(nameof(Mo2Status));
+            OnPropertyChanged(nameof(UsingMo2));
         }
     }
+
+    public bool UsingMo2 => Mo2Instance.Current != null;
+
+    public string Mo2Status => Mo2Instance.Current is { } m
+        ? $"Mod Organizer 2: profile '{m.Profile}', launches '{m.SfseTitle}'. Close MO2 before Install or Fix all."
+        : "";
 
     // Drives the "Game & launch" section: when the install path is still empty the
     // section auto-expands so a first-run user can't miss Detect/Browse; once a game is
